@@ -118,12 +118,20 @@ button{background:none;border:0;cursor:pointer}
 .path li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
 .path em{font-style:normal;font-variant-numeric:tabular-nums;color:var(--field);font-weight:600}
 
-.journal{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px}
-.journal article{background:var(--surface);border:1px solid var(--line)}
-.journal img{width:100%;aspect-ratio:16/10;object-fit:cover}
-.journal .act-body{padding:10px 12px 14px}
-.journal p{margin-top:4px;font-size:12px;color:var(--mute)}
-.journal .wide{grid-column:span 1}
+.ops-now{padding:8px 0 12px;border-bottom:1px solid var(--line)}
+.ops-line{display:grid;grid-template-columns:110px 1fr;gap:18px;padding:16px 0;border-top:1px solid var(--line);align-items:baseline}
+.ops-line time{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.ops-line strong{display:block;font-size:20px;letter-spacing:-.02em}
+.ops-line p{margin-top:6px;font-size:14px;color:var(--mute)}
+.flag-card{padding-top:4px}
+.media-feature figure{margin-top:10px}
+.media-feature img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.media-feature figcaption,.media-support figcaption{padding:10px 0 0;font-size:13px;color:var(--mute)}
+.media-support{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:12px}
+.media-support img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.media-note,.session-link{margin-top:8px;font-size:13px;color:var(--mute)}
+.session-link a{color:var(--field);font-weight:600}
+.dossier-plain{grid-template-columns:1.4fr .55fr}
 
 .tid{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .tid img{width:28px;height:34px;object-fit:contain;background:#fff;flex:0 0 auto}
@@ -247,9 +255,9 @@ table.data a{color:var(--field);font-weight:600}
 .split-geo{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;margin-top:28px}
 
 @media(max-width:1100px){
-  .mast,.geo-command,.geo-page,.ops-split,.narrative,.dossier,.split-geo,.ident-row,.know-more{grid-template-columns:1fr}
+  .mast,.geo-command,.geo-page,.ops-split,.narrative,.dossier,.dossier-plain,.split-geo,.ident-row,.know-more,.media-support{grid-template-columns:1fr}
   .geo-frame,.geo-stage{margin-inline:auto}
-  .journal{grid-template-columns:1fr 1fr}
+  .media-support{grid-template-columns:1fr 1fr}
   .scale{grid-template-columns:1fr 1fr}
   .ledger{grid-template-columns:1fr 1fr 1fr}
   .reg-team{grid-template-columns:64px 1fr 1fr}
@@ -261,7 +269,8 @@ table.data a{color:var(--field);font-weight:600}
   .top,.subnav,.hierarchy,.crumb,.notice,.app,.colophon{padding-left:14px;padding-right:14px}
   .brand img:first-of-type{display:none}
   .search-btn{min-width:0}
-  .journal,.scale,.ledger,.smart,.ba,.gallery,.people,.geo-list{grid-template-columns:1fr}
+  .scale,.ledger,.smart,.ba,.gallery,.people,.geo-list,.media-support{grid-template-columns:1fr}
+  .ops-line{grid-template-columns:1fr;gap:6px}
   .reg-team,.reg-row{grid-template-columns:1fr;gap:6px}
   .spine li{grid-template-columns:1fr;gap:4px}
   .field-bar{display:grid}

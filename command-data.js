@@ -1,8 +1,9 @@
-/* KRL Smart Farming Command Centre — prototype data.
-   All farmer, farm, agent, activity and score records are synthetic.
+/* KRL Smart Farming Command Centre — knowledge-base data.
+   SHOW WHAT WE KNOW. HIDE WHAT WE DON'T.
    Programme targets (5,000 farms, 294 ACs, 15 teams) come from the
-   published KRL Bengal brief. Current book volumes are interface-test
-   data only and must not be read as live programme statistics. */
+   published KRL Bengal brief. Row-level farmer, farm, agent and activity
+   records exist only when authored. Twenty-team capacity is internal
+   architecture only and is never represented as empty public slots. */
 (function (global) {
   "use strict";
 
@@ -23,7 +24,6 @@
     { id: "in_progress", label: "In progress" },
     { id: "completed", label: "Completed" },
     { id: "blocked", label: "Blocked" },
-    { id: "attention", label: "Needs attention" },
   ];
 
   const SCORE_AXES = [
@@ -66,15 +66,7 @@
     { id: "sundarban-strikers", logo: "images/teams/sundarban-strikers.png", name: "Sundarban Strikers", short: "SS", accent: "#2a5a50", districts: ["north-24-parganas", "south-24-parganas"] },
   ];
 
-  const RESERVED_TEAMS = [16, 17, 18, 19, 20].map((n) => ({
-    id: "reserved-" + n,
-    name: "Identity pending",
-    short: String(n),
-    slot: n,
-    accent: "#6a6a60",
-    districts: [],
-    placeholder: true,
-  }));
+  const TEAM_CAPACITY = 20;
 
   const DISTRICTS = [
     { id: "darjeeling", name: "Darjeeling", zone: "hills", x: 38, y: 6, acs: ["Darjeeling", "Kurseong", "Matigara-Naxalbari", "Siliguri", "Phansidewa"] },
@@ -153,266 +145,125 @@
 
   const TARGET_FARMS = 5000;
   const TARGET_PER_AC = 20;
-  const PROTOTYPE_FARMERS = 360;
-  const AGENTS_PER_TEAM = 8;
-
-  const agents = [];
-  TEAMS.forEach((team, ti) => {
-    for (let i = 1; i <= AGENTS_PER_TEAM; i++) {
-      const n = ti * AGENTS_PER_TEAM + i;
-      agents.push({
-        id: "ag-" + pad(n, 3),
-        code: "AG-" + pad(n, 3),
-        name: "Demo Agent " + pad(n, 3),
-        teamId: n === 24 ? "terai-tuskers" : team.id,
-        districtId: n === 24 ? "jalpaiguri" : (team.districts[i % team.districts.length] || team.districts[0]),
-      });
-    }
-  });
-
-  const STAGE_WEIGHTS = [
-    ["registered", 0.38],
-    ["verified", 0.24],
-    ["onboarded", 0.16],
-    ["training", 0.1],
-    ["plan", 0.07],
-    ["implementation", 0.04],
-    ["monitoring", 0.01],
-    ["harvest", 0],
-  ];
-
-  function weightedStage(rng) {
-    let x = rng();
-    for (const [id, w] of STAGE_WEIGHTS) {
-      x -= w;
-      if (x <= 0) return id;
-    }
-    return "registered";
-  }
-
-  function stageProgress(stage, rng) {
-    const idx = STAGES.findIndex((s) => s.id === stage);
-    const base = (idx / (STAGES.length - 1)) * 100;
-    return Math.max(4, Math.min(96, Math.round(base + (rng() - 0.4) * 12)));
-  }
-
-  const ACTIVITIES = [
-    "Registration visit completed",
-    "Farm boundary walk",
-    "Baseline soil observation",
-    "Training session attended",
-    "Smart farming plan drafted",
-    "Drip line layout marked",
-    "Compost bay prepared",
-    "Pond bund inspection",
-    "Seedbed preparation noted",
-    "Follow-up pending",
-    "Issue logged: water access",
-    "Photo evidence uploaded",
-  ];
-
   const CROPS = ["Paddy", "Vegetables", "Mustard", "Jute", "Integrated pond", "Banana", "Pulses"];
 
-  const farmers = [];
-  const farms = [];
-  const activities = [];
-  const rng = mulberry(20260925);
-  const start = new Date("2026-09-14T08:00:00+05:30");
-  const end = new Date("2026-09-25T18:00:00+05:30");
+  const agents = [
+    {
+      id: "ag-024",
+      code: "AG-024",
+      name: "Agent 024",
+      teamId: "terai-tuskers",
+      districtId: "jalpaiguri",
+    },
+  ];
 
-  const teamAcs = {};
-  acs.forEach((ac) => {
-    (teamAcs[ac.teamId] || (teamAcs[ac.teamId] = [])).push(ac);
-  });
+  const farmers = [
+    {
+      id: "farmer-014",
+      code: "F-014",
+      name: "Farmer 014",
+      village: "Maynaguri",
+      districtId: "jalpaiguri",
+      acId: "jalpaiguri-maynaguri",
+      teamId: "terai-tuskers",
+      agentId: "ag-024",
+      stage: "implementation",
+      progress: 68,
+      farmIds: ["maa-ganga"],
+      voice: "I want the pond and the vegetable beds to work together this season. Water is the first problem.",
+      goal: "Stabilise irrigation before the next paddy cycle.",
+      challenge: "Uneven water in the west plot.",
+      achievement: "Baseline walk and drip layout marked.",
+    },
+  ];
 
-  for (let i = 1; i <= PROTOTYPE_FARMERS; i++) {
-    let team = TEAMS[(i - 1) % TEAMS.length];
-    let pool = teamAcs[team.id] || acs;
-    let ac = pool[Math.floor(rng() * pool.length)];
-    if (i === 14) {
-      team = TEAMS.find((t) => t.id === "terai-tuskers");
-      ac = acs.find((a) => a.id === "jalpaiguri-maynaguri") || ac;
-    }
-    const district = DISTRICTS.find((d) => d.id === ac.districtId);
-    const teamAgents = agents.filter((a) => a.teamId === team.id);
-    const agent = i === 14
-      ? agents.find((a) => a.id === "ag-024")
-      : teamAgents[(i - 1) % teamAgents.length];
-    const stage = i === 14 ? "implementation" : weightedStage(rng);
-    const progress = i === 14 ? 68 : stageProgress(stage, rng);
-    const farmCount = rng() < 0.16 ? 2 : 1;
-    const farmerId = "farmer-" + pad(i, 3);
-    const farmer = {
-      id: farmerId,
-      code: "DF-" + pad(i, 3),
-      name: "Demo Farmer " + pad(i, 3),
-      village: i === 14 ? "Maynaguri" : "Demo Village " + pad(i, 3),
-      districtId: district.id,
-      acId: ac.id,
-      teamId: team.id,
-      agentId: agent.id,
-      stage,
-      progress,
-      farmIds: [],
-      voice: i === 14
-        ? "I want the pond and the vegetable beds to work together this season. Water is the first problem."
-        : null,
-      goal: i === 14 ? "Stabilise irrigation before the next paddy cycle." : "Complete onboarding and first training.",
-      challenge: i === 14 ? "Uneven water in the west plot." : "Awaiting verification visit.",
-      achievement: i === 14 ? "Baseline walk and drip layout marked." : null,
-    };
-    farmers.push(farmer);
+  const farms = [
+    {
+      id: "maa-ganga",
+      name: "Maa Ganga Smart Farm",
+      farmerId: "farmer-014",
+      districtId: "jalpaiguri",
+      acId: "jalpaiguri-maynaguri",
+      village: "Maynaguri",
+      teamId: "terai-tuskers",
+      agentId: "ag-024",
+      sizeAcres: 2.4,
+      crop: "Integrated pond and vegetables",
+      stage: "implementation",
+      progress: 68,
+      status: "in_progress",
+      lastVisit: "2026-09-24",
+      alerts: [],
+      contextualMediaId: "med-irrigation",
+      plots: [
+        { id: "plot-a", name: "West plot", size: "1.1 acres", crop: "Vegetables" },
+        { id: "plot-b", name: "East plot", size: "0.8 acres", crop: "Paddy nursery" },
+        { id: "plot-c", name: "Pond edge", size: "0.5 acres", crop: "Aquaculture" },
+      ],
+      smart: {
+        crop: { status: "in_progress", pct: 70, updated: "2026-09-22", note: "Vegetable beds laid. Paddy nursery started." },
+        irrigation: { status: "in_progress", pct: 80, updated: "2026-09-24", note: "Drip laterals marked. Main line pending." },
+        soil: { status: "completed", pct: 100, updated: "2026-09-18", note: "Baseline walk completed with agent AG-024." },
+        water: { status: "in_progress", pct: 40, updated: "2026-09-23", note: "West plot dries faster than the pond edge." },
+        organic: { status: "planned", pct: 25, updated: "2026-09-20", note: "Compost bay sited. Not built." },
+        machinery: { status: "not_started", pct: 0, updated: null, note: "No machinery claim on this record." },
+        weather: { status: "planned", pct: 15, updated: "2026-09-21", note: "Phone weather watch only." },
+        pest: { status: "not_started", pct: 0, updated: null, note: "Not claimed." },
+        waste: { status: "planned", pct: 20, updated: "2026-09-19", note: "Pond silt reuse discussed." },
+        livestock: { status: "not_started", pct: 0, updated: null, note: "Not part of this farm cycle." },
+        aqua: { status: "in_progress", pct: 55, updated: "2026-09-22", note: "Pond held. Stocking not recorded." },
+        energy: { status: "not_started", pct: 0, updated: null, note: "No solar claim on this record." },
+      },
+      journey: [
+        { id: "j1", title: "Farmer registered", date: "2026-09-14", status: "completed", agentId: "ag-024", note: "Registration after the Media Connect launch." },
+        { id: "j2", title: "Farm verified", date: "2026-09-16", status: "completed", agentId: "ag-024", note: "Boundary walk. Two plots and a pond edge recorded." },
+        { id: "j3", title: "Baseline assessment", date: "2026-09-18", status: "completed", agentId: "ag-024", note: "Soil and water notes. West plot flagged." },
+        { id: "j4", title: "Training", date: "2026-09-20", status: "completed", agentId: "ag-024", note: "First cluster session. Irrigation layout." },
+        { id: "j5", title: "Smart farming plan", date: "2026-09-21", status: "completed", agentId: "ag-024", note: "Plan drafted. Awaiting technical review." },
+        { id: "j6", title: "Implementation started", date: "2026-09-22", status: "in_progress", agentId: "ag-024", note: "Drip layout and vegetable beds." },
+        { id: "j7", title: "Crop cycle", date: "2026-09-23", status: "in_progress", agentId: "ag-024", note: "Nursery and pond held." },
+      ],
+      support: [
+        { role: "Farmer", name: "Farmer 014", id: "farmer-014" },
+        { role: "Agent", name: "Agent 024", id: "ag-024" },
+        { role: "Team", name: "Terai Tuskers", id: "terai-tuskers" },
+        { role: "Organisation", name: "Bharatiya Krishak Samaj West Bengal", id: null },
+      ],
+      social: { public: false, note: "", channels: [] },
+      evidence: [],
+      beforeAfter: null,
+      scores: { sat: 62, mangalmay: 54, sundar: 48, samriddhi: 41 },
+    },
+  ];
 
-    for (let f = 0; f < farmCount; f++) {
-      const farmId = f === 0 && i === 14 ? "maa-ganga" : "farm-" + pad(i, 3) + (f ? "-b" : "");
-      const farmName = f === 0 && i === 14
-        ? "Maa Ganga Smart Farm"
-        : "Demo Farm " + pad(i, 3) + (f ? " B" : "");
-      const size = +(1.1 + rng() * 2.8).toFixed(1);
-      const crop = i === 14 ? "Integrated pond and vegetables" : pick(rng, CROPS);
-      const attention = stage === "registered" && rng() < 0.12 || rng() < 0.06;
-      const farm = {
-        id: farmId,
-        name: farmName,
-        farmerId,
-        districtId: district.id,
-        acId: ac.id,
-        village: farmer.village,
-        teamId: team.id,
-        agentId: agent.id,
-        sizeAcres: i === 14 ? 2.4 : size,
-        crop,
-        stage,
-        progress: i === 14 && f === 0 ? 68 : Math.max(3, progress - f * 8),
-        status: attention ? "attention" : (stage === "implementation" || stage === "monitoring" ? "in_progress" : "planned"),
-        lastVisit: fmtDate(dateBetween(rng, start, end)),
-        alerts: attention ? ["Verification visit overdue"] : [],
-        plots: i === 14 && f === 0
-          ? [
-              { id: "plot-a", name: "West plot", size: "1.1 acres", crop: "Vegetables" },
-              { id: "plot-b", name: "East plot", size: "0.8 acres", crop: "Paddy nursery" },
-              { id: "plot-c", name: "Pond edge", size: "0.5 acres", crop: "Aquaculture" },
-            ]
-          : [{ id: "plot-main", name: "Main plot", size: size + " acres", crop }],
-      };
-      farms.push(farm);
-      farmer.farmIds.push(farmId);
+  const activities = [
+    {
+      id: "act-maa-ganga-drip",
+      farmId: "maa-ganga",
+      farmerId: "farmer-014",
+      agentId: "ag-024",
+      teamId: "terai-tuskers",
+      districtId: "jalpaiguri",
+      acId: "jalpaiguri-maynaguri",
+      title: "Drip irrigation installation marked",
+      date: "2026-09-24",
+      status: "in_progress",
+      mediaIds: [],
+      note: "Main line still pending.",
+    },
+  ];
 
-      if (i === 14 && f === 0) {
-        farm.smart = {
-          crop: { status: "in_progress", pct: 70, updated: "2026-09-22", evidence: 2, note: "Vegetable beds laid. Paddy nursery started." },
-          irrigation: { status: "in_progress", pct: 80, updated: "2026-09-24", evidence: 4, note: "Drip laterals marked. Main line pending." },
-          soil: { status: "completed", pct: 100, updated: "2026-09-18", evidence: 3, note: "Baseline walk completed with agent AG-024." },
-          water: { status: "attention", pct: 40, updated: "2026-09-23", evidence: 1, note: "West plot dries faster than the pond edge." },
-          organic: { status: "planned", pct: 25, updated: "2026-09-20", evidence: 0, note: "Compost bay sited. Not built." },
-          machinery: { status: "not_started", pct: 0, updated: null, evidence: 0, note: "No machinery claim in the prototype book." },
-          weather: { status: "planned", pct: 15, updated: "2026-09-21", evidence: 0, note: "Phone weather watch only." },
-          pest: { status: "not_started", pct: 0, updated: null, evidence: 0, note: "Not claimed." },
-          waste: { status: "planned", pct: 20, updated: "2026-09-19", evidence: 0, note: "Pond silt reuse discussed." },
-          livestock: { status: "not_started", pct: 0, updated: null, evidence: 0, note: "Not part of this farm cycle." },
-          aqua: { status: "in_progress", pct: 55, updated: "2026-09-22", evidence: 2, note: "Pond held. Stocking not recorded." },
-          energy: { status: "not_started", pct: 0, updated: null, evidence: 0, note: "No solar claim in the prototype book." },
-        };
-        farm.journey = [
-          { id: "j1", title: "Farmer registered", date: "2026-09-14", status: "completed", agentId: agent.id, note: "Prototype registration after the Media Connect launch.", evidence: 1 },
-          { id: "j2", title: "Farm verified", date: "2026-09-16", status: "completed", agentId: agent.id, note: "Boundary walk. Two plots and a pond edge recorded.", evidence: 3 },
-          { id: "j3", title: "Baseline assessment", date: "2026-09-18", status: "completed", agentId: agent.id, note: "Soil and water notes. West plot flagged.", evidence: 3 },
-          { id: "j4", title: "Training", date: "2026-09-20", status: "completed", agentId: agent.id, note: "First cluster session. Irrigation layout.", evidence: 2 },
-          { id: "j5", title: "Smart farming plan", date: "2026-09-21", status: "completed", agentId: agent.id, note: "Plan drafted. Awaiting technical review.", evidence: 1 },
-          { id: "j6", title: "Implementation started", date: "2026-09-22", status: "in_progress", agentId: agent.id, note: "Drip layout and vegetable beds.", evidence: 4 },
-          { id: "j7", title: "Crop cycle", date: "2026-09-23", status: "in_progress", agentId: agent.id, note: "Nursery and pond held.", evidence: 2 },
-          { id: "j8", title: "Monitoring", date: null, status: "planned", agentId: agent.id, note: "Weekly visit cadence not yet due.", evidence: 0 },
-          { id: "j9", title: "Harvest", date: null, status: "not_started", agentId: agent.id, note: "Out of season for this prototype.", evidence: 0 },
-          { id: "j10", title: "Outcome", date: null, status: "not_started", agentId: agent.id, note: "No outcome claimed.", evidence: 0 },
-        ];
-        farm.support = [
-          { role: "Farmer", name: farmer.name, id: farmerId },
-          { role: "Agent", name: agent.name, id: agent.id },
-          { role: "Team", name: team.name, id: team.id },
-          { role: "Trainer", name: "Demo Trainer 02", id: null },
-          { role: "Technical support", name: "KRL field desk (prototype)", id: null },
-          { role: "Agronomist", name: "Not assigned", id: null },
-          { role: "Organisation", name: "Bharatiya Krishak Samaj West Bengal", id: null },
-          { role: "Supporter", name: "NRB match pending", id: null },
-        ];
-        farm.social = {
-          public: true,
-          note: "Optional public storytelling only. No private farmer contacts are published.",
-          channels: [
-            { network: "YouTube", handle: "Karmyog TV", url: "https://youtu.be/cXO3fjWX-jg", status: "programme" },
-            { network: "Facebook", handle: "Not linked for this farm", url: null, status: "empty" },
-            { network: "Instagram", handle: "Not linked for this farm", url: null, status: "empty" },
-          ],
-        };
-        farm.evidence = [
-          { id: "ev-1", type: "photo", title: "Soil beds after layout", date: "2026-09-18", agentId: agent.id, location: farmer.village + ", Maynaguri", activity: "Baseline assessment", notes: "Demo evidence frame for soil preparation.", src: "images/field/irrigation.jpg", kind: "prototype" },
-          { id: "ev-2", type: "photo", title: "Pond edge after rain", date: "2026-09-22", agentId: agent.id, location: farmer.village, activity: "Water management", notes: "Demo evidence frame for the pond bund.", src: "images/field/pond.jpg", kind: "prototype" },
-          { id: "ev-3", type: "video", title: "Layout walk-through", date: "2026-09-24", agentId: agent.id, location: farmer.village, activity: "Drip irrigation installation", notes: "Programme clip used only to test the player.", src: "video/clip-1.mp4", poster: "images/field/irrigation.jpg", kind: "prototype" },
-          { id: "ev-4", type: "photo", title: "Paddy nursery", date: "2026-09-22", agentId: agent.id, location: farmer.village, activity: "Crop management", notes: "Demo evidence frame for the nursery plots.", src: "images/field/paddy.jpg", kind: "prototype" },
-        ];
-        farm.beforeAfter = {
-          before: { src: "images/field/pond.jpg", caption: "Pond edge before the drip laterals were marked. Demo frame." },
-          after: { src: "images/field/irrigation.jpg", caption: "Beds and laterals after the 22 Sep layout. Demo frame." },
-        };
-        farm.scores = { sat: 62, mangalmay: 54, sundar: 48, samriddhi: 41 };
-      } else {
-        farm.smart = null;
-        farm.journey = STAGES.map((s, idx) => ({
-          id: farmId + "-" + s.id,
-          title: s.label,
-          date: idx <= STAGES.findIndex((x) => x.id === stage) && idx < 6 ? fmtDate(dateBetween(rng, start, end)) : null,
-          status: idx < STAGES.findIndex((x) => x.id === stage) ? "completed" : (s.id === stage ? "in_progress" : "planned"),
-          agentId: agent.id,
-          note: "Prototype milestone.",
-          evidence: idx < 2 ? 1 : 0,
-        }));
-        farm.support = [
-          { role: "Farmer", name: farmer.name, id: farmerId },
-          { role: "Agent", name: agent.name, id: agent.id },
-          { role: "Team", name: team.name, id: team.id },
-        ];
-        farm.social = { public: false, note: "No public social link on this prototype record.", channels: [] };
-        farm.evidence = [];
-        farm.beforeAfter = null;
-        farm.scores = {
-          sat: Math.round(30 + rng() * 40),
-          mangalmay: Math.round(20 + rng() * 35),
-          sundar: Math.round(20 + rng() * 30),
-          samriddhi: Math.round(15 + rng() * 30),
-        };
-      }
-    }
-  }
-
-  farms.forEach((farm) => {
-    if (rng() < 0.22 || farm.id === "maa-ganga") {
-      activities.push({
-        id: "act-" + farm.id,
-        farmId: farm.id,
-        farmerId: farm.farmerId,
-        agentId: farm.agentId,
-        teamId: farm.teamId,
-        districtId: farm.districtId,
-        acId: farm.acId,
-        title: farm.id === "maa-ganga" ? "Drip irrigation installation marked" : pick(rng, ACTIVITIES),
-        date: farm.lastVisit,
-        status: farm.status,
-        photo: farm.id === "maa-ganga" ? "images/field/irrigation.jpg" : (rng() < 0.35 ? pick(rng, ["images/field/irrigation.jpg", "images/field/paddy.jpg", "images/field/pond.jpg"]) : null),
-        video: farm.id === "maa-ganga" ? "video/clip-1.mp4" : null,
-        prototype: true,
-      });
-    }
-  });
-
-  activities.sort((a, b) => (a.date < b.date ? 1 : -1));
-
-  const programmeMedia = [
-    { id: "pm-1", type: "photo", title: "Media Connect banner", src: "images/banner.jpg", date: "2026-09-14", context: "Programme launch", kind: "archive" },
-    { id: "pm-2", type: "photo", title: "KRL mark in the hall", src: "images/g-krl-mark.jpg", date: "2026-09-14", context: "Programme launch", kind: "archive" },
-    { id: "pm-3", type: "photo", title: "Hall from the stage", src: "images/hero.jpg", date: "2026-09-14", context: "Programme launch", kind: "archive" },
-    { id: "pm-4", type: "video", title: "KRL intro", src: "video/krl-intro-bg.mp4", poster: "images/banner.jpg", date: "2026-09-14", context: "Programme launch", kind: "archive" },
-    { id: "pm-5", type: "video", title: "Session film", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/g-from-stage.jpg", date: "2026-09-14", context: "YouTube", kind: "archive" },
-    { id: "pm-6", type: "photo", title: "Press huddle", src: "images/press-huddle.jpg", date: "2026-09-14", context: "Programme launch", kind: "archive" },
+  const MEDIA = [
+    { id: "med-hero", type: "photo", src: "images/hero.jpg", caption: "Hall from the stage", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "featured" },
+    { id: "med-banner", type: "photo", src: "images/banner.jpg", caption: "Programme banner", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-krl-mark", type: "photo", src: "images/g-krl-mark.jpg", caption: "KRL mark in the hall", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-press", type: "photo", src: "images/press-huddle.jpg", caption: "Press huddle", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-paddy", type: "photo", src: "images/field/paddy.jpg", caption: "Paddy cultivation", context: "Editorial field context — crop", category: "crop", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-pond", type: "photo", src: "images/field/pond.jpg", caption: "Farm pond", context: "Editorial field context — water", category: "water", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-visit", type: "photo", src: "images/field/visit.jpg", caption: "Field visit", context: "Editorial field context — community", category: "community", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", caption: "Irrigation layout", context: "Editorial farm context — Maa Ganga", category: "irrigation", date: null, relatedFarmId: "maa-ganga", relatedFarmerId: "farmer-014", relatedTeamId: "terai-tuskers", relatedActivityId: null, role: "contextual", placement: "farm" },
+    { id: "med-cta", type: "photo", src: "images/launch-wide.jpg", caption: "Launch hall", context: "KRL Media Connect", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "cta" },
+    { id: "med-session", type: "video", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/press-release-cover.jpg", caption: "Session film", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "link" },
   ];
 
   function byId(list, id) {
@@ -439,10 +290,9 @@
     const tAgents = agents.filter((a) => a.teamId === teamId);
     const tAcs = acs.filter((a) => a.teamId === teamId);
     const covered = new Set(tFarmers.map((f) => f.acId)).size;
-    const attention = tFarms.filter((f) => f.status === "attention").length;
     const progress = tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0;
     const scores = SCORE_AXES.map((ax) => {
-      const vals = tFarms.map((f) => f.scores[ax.id]);
+      const vals = tFarms.map((f) => (f.scores && f.scores[ax.id]) || 0);
       return { id: ax.id, label: ax.label, gloss: ax.gloss, value: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0 };
     });
     return {
@@ -452,7 +302,6 @@
       acs: tAcs.length,
       acsCovered: covered,
       districts: new Set(tFarmers.map((f) => f.districtId)).size,
-      attention,
       progress,
       scores,
     };
@@ -470,7 +319,6 @@
       acs: tAcs.length,
       acsCovered: new Set(tFarmers.map((f) => f.acId)).size,
       progress: tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0,
-      attention: tFarms.filter((f) => f.status === "attention").length,
     };
   }
 
@@ -483,7 +331,6 @@
       teams: new Set(tFarmers.map((f) => f.teamId)).size,
       agents: new Set(tFarmers.map((f) => f.agentId)).size,
       progress: tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0,
-      attention: tFarms.filter((f) => f.status === "attention").length,
     };
   }
 
@@ -495,8 +342,7 @@
       farmers: tFarmers.length,
       farms: tFarms.length,
       visits,
-      pending: tFarms.filter((f) => f.stage === "registered" || f.status === "attention").length,
-      issues: tFarms.filter((f) => f.status === "attention").length,
+      pending: tFarms.filter((f) => f.stage === "registered").length,
       progress: tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0,
     };
   }
@@ -508,16 +354,15 @@
       targetFarmers: TARGET_FARMS,
       targetPerAc: TARGET_PER_AC,
       targetAcs: acs.length,
-      prototypeFarmers: farmers.length,
-      prototypeFarms: farms.length,
+      knownFarmers: farmers.length,
+      knownFarms: farms.length,
       teams: TEAMS.length,
-      teamCapacity: 20,
+      teamCapacity: TEAM_CAPACITY,
       agents: agents.length,
       districts: DISTRICTS.length,
       acs: acs.length,
       acsCovered: new Set(farmers.map((f) => f.acId)).size,
       districtsCovered: new Set(farmers.map((f) => f.districtId)).size,
-      attention: farms.filter((f) => f.status === "attention").length,
       stageCounts,
       meanProgress: Math.round(farms.reduce((s, f) => s + f.progress, 0) / farms.length),
     };
@@ -563,29 +408,48 @@
     });
   }
 
+  function mediaById(id) {
+    return MEDIA.find((m) => m.id === id) || null;
+  }
+
+  function mediaWhere(placement) {
+    return MEDIA.filter((m) => m.placement === placement);
+  }
+
+  function uniqueMedia(list) {
+    const seen = new Set();
+    return (list || MEDIA).filter((m) => {
+      const key = m.src;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   global.KRL = {
     META: {
-      prototype: true,
       launched: "2026-09-14",
-      generated: "2026-09-25",
-      notice: "Prototype book for interface testing. Not live programme statistics.",
+      notice: "Known records only. Programme targets are published ambitions, not live enrolment.",
       targetFarms: TARGET_FARMS,
       targetPerAc: TARGET_PER_AC,
+      teamCapacity: TEAM_CAPACITY,
     },
     STAGES,
     STATUSES,
     SCORE_AXES,
     SMART_CATS,
     TEAMS,
-    RESERVED_TEAMS,
     DISTRICTS,
     ACS: acs,
     AGENTS: agents,
     FARMERS: farmers,
     FARMS: farms,
     ACTIVITIES: activities,
-    PROGRAMME_MEDIA: programmeMedia,
+    MEDIA,
     CROPS,
+    mediaById,
+    mediaWhere,
+    uniqueMedia,
     byId,
     farmersOf,
     farmsOfFarmer,

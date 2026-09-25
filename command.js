@@ -11,7 +11,7 @@
 
   const I18N = {
     en: {
-      notice: "Prototype book for interface testing. Not live programme statistics.",
+      notice: "Known records only. Programme targets are published ambitions, not live enrolment.",
       find: "Find farmer, farm, AC, team",
       command: "Command",
       geography: "Geography",
@@ -26,7 +26,7 @@
       know_more: "Know more",
     },
     bn: {
-      notice: "ইন্টারফেস পরীক্ষার প্রোটোটাইপ খাতা. চালু কর্মসূচির পরিসংখ্যান নয়.",
+      notice: "কেবল যা জানা. কর্মসূচির লক্ষ্যমাত্রা প্রকাশিত উচ্চাকাঙ্ক্ষা, চালু তালিকা নয়.",
       find: "কৃষক, খামার, কেন্দ্র, দল খুঁজুন",
       command: "কমান্ড",
       geography: "ভূগোল",
@@ -143,7 +143,7 @@
     if (!farm.smart) return [];
     return D.SMART_CATS.filter((c) => {
       const row = farm.smart[c.id];
-      return row && row.status !== "not_started" && (row.pct > 0 || row.evidence > 0);
+      return row && row.status !== "not_started" && row.pct > 0;
     }).map((c) => Object.assign({ cat: c }, farm.smart[c.id]));
   }
 
@@ -163,12 +163,13 @@
   }
 
   function mediaConnectCta() {
+    const cta = D.mediaWhere("cta")[0];
     return `<aside class="know-more">
-      <figure><img src="images/banner.jpg" alt=""></figure>
+      ${cta ? `<figure><img src="${esc(cta.src)}" alt="${esc(cta.caption)}"></figure>` : ""}
       <div>
         <p class="sec-k">KRL Media Connect</p>
-        <h2>More stories, photographs and programme coverage</h2>
-        <p>The independent Media Connect archive holds the launch essay, session film and press record. KRL Teams stays here.</p>
+        <h2>Explore more stories, photographs, event coverage and media.</h2>
+        <p>KRL Media Connect remains a separate product. This command centre stays here.</p>
         <a class="know-more-link" href="${MEDIA_CONNECT}" target="_blank" rel="noopener noreferrer">
           <span>Know more</span>
           <span lang="bn">আরও জানুন</span>
@@ -194,14 +195,18 @@
   function leagueBoard() {
     const rows = D.TEAMS.map(function (t) {
       const st = D.teamStats(t.id);
+      const known = [];
+      if (st.farmers) known.push(st.farmers + (st.farmers === 1 ? " farmer" : " farmers"));
+      if (st.farms) known.push(st.farms + (st.farms === 1 ? " farm" : " farms"));
+      if (st.agents) known.push(st.agents + (st.agents === 1 ? " agent" : " agents"));
       return '<a class="reg-team" href="' + href("team/" + t.id) + '">' +
         teamMark(t) +
         "<div><strong>" + esc(t.name) + "</strong><span>" + esc(teamRegion(t)) + "</span></div>" +
-        "<span>" + st.agents + " agents</span>" +
-        "<span>" + st.farmers + " farmers · " + st.farms + " farms</span></a>";
+        "<span>" + st.acs + " assembly seats</span>" +
+        "<span>" + (known.length ? known.join(" · ") : "Geography assigned") + "</span></a>";
     }).join("");
     return '<section class="league"><header class="sec-head"><p class="sec-k">Team network</p><h2>Team Register</h2>' +
-      "<p>Fifteen official identities. Counts are prototype book volumes, not live enrolment.</p></header>" +
+      "<p>Fifteen official identities. Field counts appear only where a record exists.</p></header>" +
       '<div class="register-list">' + rows + "</div></section>";
   }
 
@@ -251,20 +256,19 @@
 
   function notFound(kind, id) {
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Not found" }]);
-    return empty(kind + " not found", "No prototype record matches “" + id + "”. Return to the command centre and try another path.");
+    return empty(kind + " not found", "No known record matches “" + id + "”. Return to the command centre and try another path.");
   }
 
   function viewCommand() {
     setNav("command");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
     const s = D.programmeStats();
-    const acts = D.ACTIVITIES.filter((a) => a.photo).slice(0, 5).map((a) => {
-      const farm = D.byId(D.FARMS, a.farmId);
-      const agent = D.byId(D.AGENTS, a.agentId);
-      return `<article><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
-    }).join("");
+    const latest = D.ACTIVITIES[0];
+    const latestFarm = latest ? D.byId(D.FARMS, latest.farmId) : null;
+    const latestAgent = latest ? D.byId(D.AGENTS, latest.agentId) : null;
     const flag = D.byId(D.FARMS, "maa-ganga");
     const flagTeam = flag ? D.byId(D.TEAMS, flag.teamId) : null;
+    const flagFarmer = flag ? D.byId(D.FARMERS, flag.farmerId) : null;
 
     return `
       <header class="mast">
@@ -276,15 +280,15 @@
         </div>
         <div class="mast-aside">
           <div><strong>Programme target</strong> ${s.targetFarmers.toLocaleString("en-IN")} farmers</div>
-          <div><strong>State frame</strong> ${s.acs} assembly constituencies · ${s.teams} official teams</div>
-          <div><strong>Demo book</strong> ${s.prototypeFarmers} farmers · ${s.prototypeFarms} farms · ${s.agents} agents</div>
+          <div><strong>State frame</strong> ${s.districts} districts · ${s.acs} assembly constituencies</div>
+          <div><strong>Known records</strong> ${s.knownFarmers} farmer · ${s.knownFarms} farm · ${s.agents} agent</div>
         </div>
       </header>
       <dl class="scale">
-        <a href="${href("farmers")}"><dt>Demo farmers</dt><dd>${s.prototypeFarmers}</dd><small>Programme target ${s.targetFarmers.toLocaleString("en-IN")}</small></a>
-        <a href="${href("farms")}"><dt>Demo farms</dt><dd>${s.prototypeFarms}</dd><small>Holdings in the prototype book</small></a>
-        <a href="${href("agents")}"><dt>Demo agents</dt><dd>${s.agents}</dd><small>Field operators in the book</small></a>
-        <a href="${href("teams")}"><dt>Official teams</dt><dd>${s.teams}</dd><small>${s.acs} assembly constituencies</small></a>
+        <a href="${href("farmers")}"><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd><small>Published ambition</small></a>
+        <a href="${href("geo")}"><dt>Assembly seats</dt><dd>${s.acs}</dd><small>${s.districts} districts</small></a>
+        <a href="${href("teams")}"><dt>Official teams</dt><dd>${s.teams}</dd><small>Current league identities</small></a>
+        <a href="${href("farms")}"><dt>Known farms</dt><dd>${s.knownFarms}</dd><small>${s.knownFarmers} farmer · ${s.agents} agent</small></a>
       </dl>
       <section class="geo-command">
         <div>
@@ -292,17 +296,23 @@
           <h2 class="sec-title" style="margin-top:0">West Bengal</h2>
           ${wbMap(false)}
         </div>
-        ${flag ? `<aside>
+        ${flag ? `<aside class="flag-card">
           <p class="geo-kicker">Flagship record</p>
           <h2 class="sec-title" style="margin-top:0">${esc(flag.name)}</h2>
           ${teamIdentity(flagTeam, "Jalpaiguri · Maynaguri")}
-          <p class="mast-sub">68% implementation. Demo Farmer 014 · AG-024.</p>
+          <p class="mast-sub">${flag.progress}% implementation. ${esc(flagFarmer.name)} · ${esc(latestAgent ? latestAgent.code : flag.agentId)}.</p>
           <p><a href="${href("farm/maa-ganga")}">Open Farm 360</a></p>
         </aside>` : ""}
       </section>
-      ${acts ? `<section>
+      ${latest ? `<section class="ops-now">
         <header class="sec-head"><p class="sec-k">Field journal</p><h2>Current activity</h2></header>
-        <div class="journal">${acts}</div>
+        <a class="ops-line" href="${href("farm/" + latest.farmId)}">
+          <time>${esc(latest.date)}</time>
+          <div>
+            <strong>${esc(latest.title)}</strong>
+            <p>${esc(latestFarm ? latestFarm.name : "")} · ${esc(latestAgent ? latestAgent.code : "")}${latest.note ? " · " + esc(latest.note) : ""}</p>
+          </div>
+        </a>
       </section>` : ""}
       ${leagueBoard()}`;
   }
@@ -325,14 +335,14 @@
     const rows = D.DISTRICTS.map((d) => {
       const st = D.districtStats(d.id);
       const pct = Math.round((st.farmers / max) * 100);
-      return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers} · ${st.acsCovered}/${st.acs}</em><span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span></a>`;
+      return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers ? st.farmers + (st.farmers === 1 ? " farmer" : " farmers") : st.acs + " ACs"}</em>${st.farmers ? `<span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ""}</a>`;
     }).join("");
     return `<div class="geo-frame">
       <div class="geo-stage">
         <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
         <div class="geo-marks">${marks}</div>
       </div>
-      <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Present in the book</span></p>
+      <p class="geo-legend"><span><b class="l-a"></b>Known farm record</span></p>
       <p class="geo-note">Programme Geographic View. Not a cadastral map.</p>
     </div>
     ${withList === false ? "" : `<aside class="geo-register"><h2 class="sec-title" style="margin-top:0">District register</h2><div class="geo-list" role="list">${rows}</div></aside>`}`;
@@ -358,7 +368,8 @@
     const team = D.TEAMS.find((t) => t.districts.includes(id));
     const list = D.ACS.filter((a) => a.districtId === id).map((a) => {
       const as = D.acStats(a.id);
-      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${as.farmers} farmers · ${as.farms} farms</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
+      const known = as.farmers ? as.farmers + (as.farmers === 1 ? " farmer" : " farmers") + " · " + as.farms + (as.farms === 1 ? " farm" : " farms") : "In the state frame";
+      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${known}</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">District</p>
@@ -427,15 +438,18 @@
     if (!team || team.placeholder) return notFound("Team", id);
     crumb([{ href: "#/", label: "West Bengal" }, { href: href("teams"), label: "Teams" }, { label: team.name }]);
     const st = D.teamStats(id);
-    const teamAgents = D.AGENTS.filter((a) => a.teamId === id).map((a) => {
+    const teamAgents = D.AGENTS.filter((a) => a.teamId === id);
+    const agentRows = teamAgents.map((a) => {
       const as = D.agentStats(a.id);
-      return `<a class="reg-row" href="${href("agent/" + a.id)}"><b>${esc(a.code)}</b><span>${esc(a.name)}</span><em>${as.farmers} farmers</em><em>${as.farms} farms</em></a>`;
+      return `<a class="reg-row" href="${href("agent/" + a.id)}"><b>${esc(a.code)}</b><span>${esc(a.name)}</span><em>${as.farmers ? as.farmers + (as.farmers === 1 ? " farmer" : " farmers") : ""}</em><em>${as.farms ? as.farms + (as.farms === 1 ? " farm" : " farms") : ""}</em></a>`;
     }).join("");
-    const acts = D.ACTIVITIES.filter((a) => a.teamId === id && a.photo).slice(0, 6).map((a) => {
+    const acts = D.ACTIVITIES.filter((a) => a.teamId === id);
+    const actRows = acts.map((a) => {
       const farm = D.byId(D.FARMS, a.farmId);
-      return `<article class="act"><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>`;
+      return `<a class="ops-line" href="${href("farm/" + a.farmId)}"><time>${esc(a.date)}</time><div><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")}${a.note ? " · " + esc(a.note) : ""}</p></div></a>`;
     }).join("");
     const districts = team.districts.map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
+    const acList = D.ACS.filter((a) => a.teamId === id).map((a) => `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${esc(nameOf("district", a.districtId))}</span><em></em><em></em></a>`).join("");
     return `<section class="ident ident-row">${teamMark(team)}<div>
       <p class="mast-k">Team operations</p>
       <h1>${esc(team.name)}</h1>
@@ -445,17 +459,21 @@
       <div><dt>Farmers</dt><dd>${st.farmers}</dd></div>
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
-      <div><dt>ACs</dt><dd>${st.acsCovered}/${st.acs}</dd></div>
-      <div><dt>Districts</dt><dd>${st.districts}</dd></div>
+      <div><dt>ACs</dt><dd>${st.acs}</dd></div>
+      <div><dt>Districts</dt><dd>${team.districts.length}</dd></div>
     </dl>
-    <section>
+    ${teamAgents.length ? `<section>
       <h2 class="sec-title">Agents</h2>
-      <div class="register">${teamAgents}</div>
-    </section>
-    ${acts ? `<section class="rail">
-      <h2 class="sec-title">Recent activity</h2>
-      <div class="film">${acts}</div>
-    </section>` : ""}`;
+      <div class="register">${agentRows}</div>
+    </section>` : ""}
+    ${actRows ? `<section>
+      <h2 class="sec-title">Recorded activity</h2>
+      ${actRows}
+    </section>` : ""}
+    <section class="register">
+      <h2 class="sec-title">Assembly constituencies</h2>
+      ${acList}
+    </section>`;
   }
 
   function viewAgents(params) {
@@ -471,7 +489,7 @@
     return `<section class="ident"><div>
       <p class="mast-k">Field roster</p>
       <h1>Agents</h1>
-      <p>${list.length} agents in the prototype book.</p>
+      <p>${list.length} ${list.length === 1 ? "known agent" : "known agents"}.</p>
     </div></section>
       ${filtersBar(params)}
       <div class="table-wrap"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Team</th><th>Farmers</th><th>Farms</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -538,7 +556,7 @@
     return `<section class="ident"><div>
       <p class="mast-k">People</p>
       <h1>Farmers</h1>
-      <p>${list.length} demo farmers. A farmer may hold more than one farm.</p>
+      <p>${list.length} ${list.length === 1 ? "known farmer" : "known farmers"}. A farmer may hold more than one farm.</p>
     </div></section>
       ${filtersBar(params)}
       ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farmer</th><th>ID</th><th>Village</th><th>District</th><th>Team</th><th>Farms</th><th>Stage</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farmers", slice, params)}` : empty("No farmers match", "Change filters or clear search.")}`;
@@ -605,7 +623,7 @@
     return `<section class="ident"><div>
       <p class="mast-k">Holdings</p>
       <h1>Farms</h1>
-      <p>${list.length} demo farms. Distinct from the farmer who holds them.</p>
+      <p>${list.length} ${list.length === 1 ? "known farm" : "known farms"}. Distinct from the farmer who holds them.</p>
     </div></section>
       ${filtersBar(params)}
       ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farm</th><th>Farmer</th><th>District</th><th>Team</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farms", slice, params)}` : empty("No farms match", "Change filters or clear search.")}`;
@@ -629,9 +647,9 @@
       { href: href("farmer/" + farm.farmerId), label: farmer.name },
       { label: farm.name },
     ]);
-    const visual = farm.id === "maa-ganga" ? "images/field/irrigation.jpg" : (farm.crop && /paddy|rice/i.test(farm.crop) ? "images/field/paddy.jpg" : "images/field/pond.jpg");
-    return `<section class="dossier">
-      <figure class="dossier-visual"><img src="${esc(visual)}" alt="Field context for ${esc(farm.name)}"></figure>
+    const visual = farm.contextualMediaId ? D.mediaById(farm.contextualMediaId) : null;
+    return `<section class="dossier${visual ? "" : " dossier-plain"}">
+      ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : ""}
       <div>
         <p class="dossier-k">${farm.id === "maa-ganga" ? "Farm 360 · Flagship record" : "Farm 360"}</p>
         <h1>${esc(farm.name)}</h1>
@@ -665,8 +683,7 @@
     if (current === "journey") {
       const items = (farm.journey || []).filter((j) => j.date).map((j) => `<li data-status="${esc(j.status)}">
         <time>${esc(j.date)}</time><i></i>
-        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)} · ${esc(agent.code)}${j.evidence ? " · " + j.evidence + " evidence" : ""}</p>
-        ${j.evidence ? `<p><a href="${href("farm/" + farm.id + "/media")}">View evidence</a></p>` : ""}</div>
+        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)} · ${esc(agent.code)}</p></div>
       </li>`).join("");
       return head + `<ol class="journey">${items}</ol>`;
     }
@@ -677,7 +694,6 @@
           <div class="progress"><span class="bar" aria-hidden="true"><i style="width:${row.pct}%"></i></span><strong>${row.pct}%</strong></div>
           <p>${statusBadge(row.status)}${row.updated ? " · " + esc(row.updated) : ""} · ${esc(agent.code)}</p>
           <p>${esc(row.note)}</p>
-          ${row.evidence ? `<p>${row.evidence} ${row.evidence === 1 ? "item" : "items"} · <a href="${href("farm/" + farm.id + "/media")}">View evidence</a></p>` : ""}
         </article>`).join("");
       return head + `<div class="smart">${cards}</div>`;
     }
@@ -734,7 +750,6 @@
     }
 
     const latest = D.ACTIVITIES.find((a) => a.farmId === farm.id);
-    const ev = (farm.evidence || []).slice(0, 3);
     const plan = farm.id === "maa-ganga"
       ? "Integrated crop management with monitored irrigation, soil practices and seasonal field activities."
       : "";
@@ -747,12 +762,10 @@
         <li><h3>What</h3><p>${farm.sizeAcres} acres · ${esc(farm.crop)}</p></li>
         ${plan ? `<li><h3>How</h3><p>${esc(plan)}</p></li>` : ""}
         <li><h3>Progress</h3><p>${farm.progress}% · ${esc(stageLabel(farm.stage))}${farmer.achievement ? ". " + esc(farmer.achievement) : ""}</p></li>
-        ${ev.length ? `<li><h3>Evidence</h3><p>${ev.length} items on this record. <a href="${href("farm/" + farm.id + "/media")}">Open gallery</a></p></li>` : ""}
         <li><h3>People</h3><p><a href="${href("agent/" + agent.id)}">${esc(agent.code)}</a> · <a href="${href("team/" + farm.teamId)}">${esc(nameOf("team", farm.teamId))}</a>${allowed.includes("people") ? ` · <a href="${href("farm/" + farm.id + "/people")}">Support network</a>` : ""}</p></li>
       </ol>
       <aside>
-        ${latest ? `<h2 class="sec-title">Now on the farm</h2><p class="now">${esc(latest.title)} · ${esc(latest.date)}</p>` : ""}
-        ${ev.length ? ev.map((e) => `<figure class="now-fig"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.date)}</figcaption></figure>`).join("") : ""}
+        ${latest ? `<h2 class="sec-title">Now on the farm</h2><p class="now">${esc(latest.title)} · ${esc(latest.date)}${latest.note ? ". " + esc(latest.note) : ""}</p>` : ""}
         ${farmer.voice ? `<blockquote class="voice">${esc(farmer.voice)}</blockquote>` : ""}
       </aside>
     </div>`;
@@ -780,30 +793,49 @@
     return `<section class="ident"><div>
       <p class="mast-k">Field book</p>
       <h1>Activity</h1>
-      <p>${list.length} prototype visits.</p>
+      <p>${list.length} ${list.length === 1 ? "recorded activity" : "recorded activities"}.</p>
     </div></section>
       ${filtersBar(params)}
-      ${rows ? `<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty("No activity", "No visits match.")}
+      ${rows ? `<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
       ${pager("activity", slice, params)}`;
   }
 
   function viewMedia() {
     setNav("media");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Media" }]);
-    const prog = D.PROGRAMME_MEDIA.map((m, i) => {
-      const media = m.type === "video" && !String(m.src).includes("youtu")
-        ? `<video controls playsinline preload="metadata" poster="${esc(m.poster || m.src)}"><source src="${esc(m.src)}" type="video/mp4"></video>`
-        : `<img src="${esc(m.poster || m.src)}" alt="${esc(m.title)}">`;
-      return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(m.title)} · ${esc(m.context)}</figcaption></figure>`;
-    }).join("");
-    const farmEv = D.FARMS.flatMap((f) => (f.evidence || []).map((e) => Object.assign({ farm: f }, e)));
+    const featured = D.uniqueMedia(D.mediaWhere("featured"));
+    const supporting = D.uniqueMedia(D.mediaWhere("supporting"));
+    const field = D.uniqueMedia(D.mediaWhere("field"));
+    const session = D.mediaWhere("link")[0];
+    const feat = featured[0];
     return `<section class="ident"><div>
       <p class="mast-k">Archive</p>
       <h1>Media</h1>
-      <p>Selected programme stills and farm records available in this book.</p>
+      <p>Editorially curated stills. Each photograph appears once, in its own context.</p>
     </div></section>
-      ${prog ? `<h2 style="font-size:18px;margin:8px 0 12px">Programme archive</h2><div class="gallery">${prog}</div>` : ""}
-      ${farmEv.length ? `<h2 style="font-size:18px;margin:22px 0 12px">Farm records</h2><div class="gallery">${farmEv.slice(0,5).map((e,i) => `<figure class="${i===0?"wide":""}"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.farm.name)}</figcaption></figure>`).join("")}</div>` : ""}
+      ${feat ? `<section class="media-feature">
+        <p class="sec-k">Featured media</p>
+        <figure>
+          <img src="${esc(feat.src)}" alt="${esc(feat.caption)}">
+          <figcaption>${esc(feat.caption)} · ${esc(feat.context)}${feat.date ? " · " + esc(feat.date) : ""}</figcaption>
+        </figure>
+      </section>` : ""}
+      ${supporting.length ? `<section>
+        <p class="sec-k" style="margin-top:28px">Supporting media</p>
+        <div class="media-support">${supporting.map((m) => `<figure>
+          <img src="${esc(m.src)}" alt="${esc(m.caption)}">
+          <figcaption>${esc(m.caption)} · ${esc(m.context)}</figcaption>
+        </figure>`).join("")}</div>
+      </section>` : ""}
+      ${field.length ? `<section>
+        <p class="sec-k" style="margin-top:28px">Field context</p>
+        <p class="media-note">Editorial agriculture photographs. Not verified farm evidence.</p>
+        <div class="media-support">${field.map((m) => `<figure>
+          <img src="${esc(m.src)}" alt="${esc(m.caption)}">
+          <figcaption>${esc(m.caption)} · ${esc(m.context)}</figcaption>
+        </figure>`).join("")}</div>
+      </section>` : ""}
+      ${session ? `<p class="session-link">Programme session film · <a href="${esc(session.src)}" target="_blank" rel="noopener noreferrer">${esc(session.caption)}</a></p>` : ""}
       ${mediaConnectCta()}`;
   }
 
@@ -818,12 +850,12 @@
     return `<section class="ident"><div>
       <p class="mast-k">Operations</p>
       <h1>Reports</h1>
-      <p>Book volumes only. Not a published league table.</p>
+      <p>Known records and published programme targets. Not a published league table.</p>
     </div></section>
       <dl class="ledger">
-        <div><dt>Demo farmers</dt><dd>${s.prototypeFarmers}</dd></div>
-        <div><dt>Demo farms</dt><dd>${s.prototypeFarms}</dd></div>
-        <div><dt>Demo agents</dt><dd>${s.agents}</dd></div>
+        <div><dt>Known farmers</dt><dd>${s.knownFarmers}</dd></div>
+        <div><dt>Known farms</dt><dd>${s.knownFarms}</dd></div>
+        <div><dt>Known agents</dt><dd>${s.agents}</dd></div>
         <div><dt>Official teams</dt><dd>${s.teams}</dd></div>
         <div><dt>ACs in frame</dt><dd>${s.acs}</dd></div>
         <div><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd></div>
