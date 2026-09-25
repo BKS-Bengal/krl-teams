@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Farming Command Centre · Krishi Ratna League Bengal</title>
+  <meta name="description" content="Prototype command centre for the Krishi Ratna League Bengal smart farming programme. West Bengal to farm 360.">
+  <link rel="canonical" href="https://krl-media-connect.vercel.app/command.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Smart Farming Command Centre · KRL Bengal">
+  <meta property="og:description" content="From West Bengal to one farm’s evidence. Prototype operational view.">
+  <meta property="og:image" content="https://krl-media-connect.vercel.app/images/og.jpg">
+  <link rel="stylesheet" href="command.css?v=20260925g">
+</head>
+<body>
+  <a class="skip" href="#app">Skip to content</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="brand" href="#/">
+      <img src="images/krl-logo.png" alt="Krishi Ratna League Bengal">
+      <img src="images/bks-seal.jpg" alt="Bharatiya Krishak Samaj">
+      <span class="brand-text">
+        <span class="brand-k">Smart farming</span>
+        <span class="brand-t">Command Centre</span>
+      </span>
+    </a>
+    <div class="top-tools">
+      <button type="button" class="search-btn" id="open-search" data-i18n="find">Find farmer, farm, AC, team</button>
+      <a class="essay-link" href="index.html" data-i18n="essay">Media Connect</a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="bn" aria-pressed="false">বাং</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="subnav" aria-label="Primary">
+    <a href="#/" data-nav="command" data-i18n="command">Command</a>
+    <a href="#/geo" data-nav="geo" data-i18n="geography">Geography</a>
+    <a href="#/teams" data-nav="teams" data-i18n="teams">Teams</a>
+    <a href="#/agents" data-nav="agents" data-i18n="agents">Agents</a>
+    <a href="#/farmers" data-nav="farmers" data-i18n="farmers">Farmers</a>
+    <a href="#/farms" data-nav="farms" data-i18n="farms">Farms</a>
+    <a href="#/activity" data-nav="activity" data-i18n="activity">Activity</a>
+    <a href="#/media" data-nav="media" data-i18n="media">Media</a>
+    <a href="#/reports" data-nav="reports" data-i18n="reports">Reports</a>
+  </nav>
+
+  <p class="notice" data-i18n="notice">Prototype book for interface testing. Not live programme statistics.</p>
+  <nav class="crumb" id="crumb" aria-label="Breadcrumb"></nav>
+  <main class="app" id="app"></main>
+
+  <nav class="field-bar" aria-label="Field actions">
+    <a href="#/farm/maa-ganga">Farm</a>
+    <a href="#/farm/maa-ganga/journey">Next</a>
+    <a href="#/farm/maa-ganga/media">Photo</a>
+    <a href="#/farms?status=attention">Issue</a>
+  </nav>
+
+  <div class="overlay" id="search-overlay" hidden>
+    <div class="search-box" role="dialog" aria-label="Search">
+      <input id="search-input" type="search" placeholder="Farmer, farm, agent, team, AC, district" autocomplete="off">
+      <ul id="search-results"></ul>
+    </div>
+  </div>
+
+  <script src="command-data.js?v=20260925g"></script>
+  <script src="command.js?v=20260925g"></script>
+</body>
+</html>
