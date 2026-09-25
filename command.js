@@ -21,7 +21,7 @@
       activity: "Activity",
       media: "Media",
       reports: "Reports",
-      product: "PK Bengal",
+      product: "KRL Teams",
     },
     bn: {
       notice: "ইন্টারফেস পরীক্ষার প্রোটোটাইপ খাতা. চালু কর্মসূচির পরিসংখ্যান নয়.",
@@ -35,7 +35,7 @@
       activity: "কাজ",
       media: "মিডিয়া",
       reports: "প্রতিবেদন",
-      product: "পি কে বেঙ্গল",
+      product: "কেআরএল টিমস",
     },
   };
 
@@ -118,37 +118,51 @@
   }
 
 
-  function teamMark(team) {
-    if (!team || team.placeholder || !team.logo) {
-      return '<span class="crest-void" aria-hidden="true"></span>';
+  function teamIdentity(team, extra) {
+    if (!team) return "";
+    if (team.placeholder || !team.logo) {
+      return '<span class="tid pending"><span class="tid-void" aria-hidden="true"></span><span><b>Identity pending</b><small>' + esc(extra || ("Slot " + (team.slot || "") + " of 20")) + "</small></span></span>";
     }
-    return '<img src="' + esc(team.logo) + '" alt="' + esc(team.name) + ' official mark">';
+    return '<span class="tid"><img src="' + esc(team.logo) + '" alt="' + esc(team.name) + '"><span><b>' + esc(team.name) + "</b><small>" + esc(extra || teamRegion(team)) + "</small></span></span>";
   }
 
-  function teamCard(t) {
-    const st = D.teamStats(t.id);
-    return '<a class="crest-card" href="' + href("team/" + t.id) + '">' +
-      teamMark(t) +
-      "<strong>" + esc(t.name) + "</strong>" +
-      '<span class="crest-geo">' + esc(teamRegion(t)) + "</span>" +
-      '<span class="crest-ops">' + st.agents + " agents · " + st.farmers + " farmers · " + st.farms + " farms</span>" +
-      '<span class="crest-sig">' + st.progress + "% implementation · demo book</span></a>";
+  function teamMark(team) {
+    if (!team || team.placeholder || !team.logo) return '<span class="tid-void" aria-hidden="true"></span>';
+    return '<img src="' + esc(team.logo) + '" alt="' + esc(team.name) + '">';
   }
 
-  function reservedCard(t) {
-    return '<div class="crest-card pending">' +
-      '<span class="crest-void" aria-hidden="true"></span>' +
-      "<strong>Identity pending</strong>" +
-      '<span class="crest-geo">Slot ' + t.slot + " of 20</span>" +
-      '<span class="crest-ops">No official mark issued</span></div>';
+  function captionFor(kind, title) {
+    const map = {
+      irrigation: "Irrigation planning",
+      soil: "Soil preparation",
+      crop: "Crop development",
+      pond: "Water management",
+      visit: "Farm visit",
+      training: "Training",
+      photo: "Field activity",
+      video: "Field walk-through",
+    };
+    return map[kind] || title || "Field activity";
   }
 
-  function leagueBoard(page) {
-    const cards = D.TEAMS.map(teamCard).join("") + D.RESERVED_TEAMS.map(reservedCard).join("");
-    return '<section class="' + (page ? "league page-league" : "league") + '">' +
-      '<header class="sec-head"><p class="sec-k">Programme league</p><h2>Team Register</h2>' +
-      "<p>Fifteen official identities from the issued team sheet. Five reserved slots remain unused until official marks exist. Counts below are prototype book volumes, not live enrolment.</p></header>" +
-      '<div class="crest-grid">' + cards + "</div></section>";
+  function leagueBoard() {
+    const rows = D.TEAMS.map(function (t) {
+      const st = D.teamStats(t.id);
+      return '<a class="reg-team" href="' + href("team/" + t.id) + '">' +
+        teamMark(t) +
+        "<div><strong>" + esc(t.name) + "</strong><span>" + esc(teamRegion(t)) + "</span></div>" +
+        "<span>" + st.agents + " agents</span>" +
+        "<span>" + st.farmers + " farmers · " + st.farms + " farms</span>" +
+        "<b class=\"sig\">" + st.progress + "%</b></a>";
+    }).join("") + D.RESERVED_TEAMS.map(function (t) {
+      return '<div class="reg-team pending">' +
+        '<span class="tid-void" aria-hidden="true"></span>' +
+        "<div><strong>Identity pending</strong><span>Slot " + t.slot + " of 20</span></div>" +
+        "<span>—</span><span>—</span><b class=\"sig\">—</b></div>";
+    }).join("");
+    return '<section class="league"><header class="sec-head"><p class="sec-k">Team network</p><h2>Team Register</h2>' +
+      "<p>Fifteen official identities. Five reserved slots remain unused. Counts are prototype book volumes, not live enrolment.</p></header>" +
+      '<div class="register-list">' + rows + "</div></section>";
   }
 
   function setNav(active) {
@@ -211,16 +225,14 @@
     const attn = D.FARMS.filter((f) => f.status === "attention").slice(0, 6).map((f) =>
       `<li><a href="${href("farm/" + f.id)}"><strong>${esc(f.name)}</strong><span>${esc(nameOf("farmer", f.farmerId))} · ${esc(nameOf("district", f.districtId))} · ${esc(f.lastVisit)}</span></a></li>`
     ).join("");
-    const acts = D.ACTIVITIES.slice(0, 7).map((a) => {
+    const fieldStills = ["images/field/irrigation.jpg","images/field/paddy.jpg","images/field/pond.jpg","images/field/visit.jpg","images/field/training.jpg"];
+    const acts = D.ACTIVITIES.filter((a) => a.photo || a.farmId === "maa-ganga").slice(0, 5).map((a, i) => {
       const farm = D.byId(D.FARMS, a.farmId);
       const agent = D.byId(D.AGENTS, a.agentId);
-      const src = a.farmId === "maa-ganga" ? "images/field/irrigation.jpg" : a.photo;
-      const media = src
-        ? `<img src="${esc(src)}" alt="${esc(a.title)} at ${esc(farm ? farm.name : "a demo farm")}">`
-        : `<div class="ph">No media</div>`;
-      return `<article class="act"><a href="${href("farm/" + a.farmId)}">${media}<div class="act-body"><strong>${esc(a.title)}</strong><p>Demo media · ${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
+      const src = a.photo || fieldStills[i % fieldStills.length];
+      return `<article><a href="${href("farm/" + a.farmId)}"><img src="${esc(src)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
     }).join("");
-    const register = leagueBoard(false);
+    const register = leagueBoard();
 
     return `
       <header class="mast">
@@ -242,42 +254,52 @@
         <a href="${href("geo")}"><dt>Field coverage</dt><dd>${s.acsCovered}<span style="font-size:.45em">/${s.acs}</span></dd><small>Assembly seats with records</small></a>
         <a href="${href("farms", { status: "attention" })}"><dt>Attention</dt><dd>${s.attention}</dd><small>Mean path ${s.meanProgress}%</small></a>
       </dl>
-      <div class="ops">
-        <section>
-          <h2 class="sec-title">Where the book is active</h2>
-          ${wbMap()}
-        </section>
+      <section class="geo-command">
+        <div>
+          <p class="geo-kicker">Programme Geographic View</p>
+          <h2 class="sec-title" style="margin-top:0">West Bengal</h2>
+          ${wbMap(false)}
+        </div>
         <aside>
-          <h2 class="sec-title">What needs attention</h2>
+          <h2 class="sec-title" style="margin-top:0">Needs attention</h2>
           <ul class="attn">${attn || "<li>None flagged in this book.</li>"}</ul>
-          <h2 class="sec-title" style="margin-top:28px">Programme path</h2>
+          <h2 class="sec-title">Programme path</h2>
           <ol class="path">${life}</ol>
         </aside>
-      </div>
-      <section class="rail">
-        <h2 class="sec-title">Current activity</h2>
-        <div class="film">${acts || empty("No activity", "No prototype visits in range.")}</div>
+      </section>
+      <section>
+        <header class="sec-head"><p class="sec-k">Field journal</p><h2>Current activity</h2></header>
+        <div class="journal">${acts}</div>
       </section>
       ${register}`;
   }
 
-  function wbMap() {
+  function districtTone(st) {
+    if (st.farmers >= 8) return "active";
+    if (st.farmers > 0) return "indicated";
+    return "upcoming";
+  }
+
+  function wbMap(withList) {
     const max = Math.max.apply(null, D.DISTRICTS.map((d) => D.districtStats(d.id).farmers)) || 1;
+    const marks = D.DISTRICTS.map((d) => {
+      const st = D.districtStats(d.id);
+      const left = ((d.x - 8) / 64) * 100;
+      const top = ((d.y - 2) / 82) * 100;
+      return `<a class="geo-dot ${districtTone(st)}" href="${href("district/" + d.id)}" style="left:${left}%;top:${top}%" title="${esc(d.name)}" aria-label="${esc(d.name)}"></a>`;
+    }).join("");
     const rows = D.DISTRICTS.map((d) => {
       const st = D.districtStats(d.id);
       const pct = Math.round((st.farmers / max) * 100);
       return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers} · ${st.acsCovered}/${st.acs}</em><span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span></a>`;
     }).join("");
-    return `<div class="geo-plate">
-      <div class="geo-land">
-        <p class="geo-kicker">West Bengal · 23 districts · ${D.ACS.length} ACs</p>
-        <svg class="wb-sil" viewBox="0 0 280 420" role="img" aria-label="West Bengal outline">
-          <path class="land" d="M148 14 C162 8 176 14 174 28 L162 46 C198 38 246 52 254 78 C250 100 214 108 192 96 C180 118 168 138 150 158 C136 180 148 198 164 214 C182 236 196 262 188 288 C204 308 236 322 244 356 C236 384 204 400 168 392 C132 408 104 388 86 352 C58 322 44 286 58 252 C46 228 38 202 56 176 C78 148 96 118 118 88 C132 60 138 32 148 14 Z"/>
-          <text x="148" y="412" text-anchor="middle">State frame · not a cadastral map</text>
-        </svg>
-      </div>
-      <div class="geo-list" role="list">${rows}</div>
-    </div>`;
+    return `<div class="geo-stage">
+      <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
+      <div class="geo-marks">${marks}</div>
+    </div>
+    <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Indicated</span><span><b class="l-u"></b>Upcoming</span></p>
+    <p class="notice">Programme Geographic View. Not a cadastral map.</p>
+    ${withList === false ? "" : `<div class="geo-list" role="list">${rows}</div>`}`;
   }
 
   function viewGeo(params) {
@@ -288,7 +310,7 @@
       <h1>Geography</h1>
       <p>West Bengal to district to assembly constituency to the field network. This is a programme geographic view, not a cadastral map.</p>
     </div></section>
-      ${wbMap()}`;
+      ${wbMap(true)}`;
   }
 
   function viewDistrict(id) {
@@ -303,8 +325,9 @@
       return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${as.farmers} farmers · ${as.farms} farms</span><em>${as.progress || 0}%</em><em>${as.attention ? as.attention + " attn" : "—"}</em></a>`;
     }).join("");
     return `<section class="ident"><div>
-      <p class="mast-k">District · ${team ? esc(team.name) : "Unassigned cluster"}</p>
+      <p class="mast-k">District</p>
       <h1>${esc(d.name)}</h1>
+      ${team ? teamIdentity(team) : ""}
       <p>${d.acs.length} assembly constituencies in the state frame</p>
     </div></section>
     <dl class="ledger">
@@ -339,8 +362,9 @@
       return `<tr><td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td><td><a href="${href("farm/" + (farm ? farm.id : ""))}">${esc(farm ? farm.name : "—")}</a></td><td>${esc(stageLabel(f.stage))}</td><td>${f.progress}%</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
-      <p class="mast-k">Assembly constituency · ${esc(team.name)}</p>
+      <p class="mast-k">Assembly constituency</p>
       <h1>${esc(ac.name)}</h1>
+      ${teamIdentity(team)}
       <p>${esc(d.name)} · target ${D.META.targetPerAc} farms at full book</p>
     </div></section>
     <dl class="ledger">
@@ -361,7 +385,7 @@
       <p class="mast-k">Organisation</p>
       <h1>Teams</h1>
       <p>Fifteen official identities. Five slots remain unused until official identities exist.</p>
-    </div></section>${leagueBoard(true)}`;
+    </div></section>${leagueBoard()}`;
   }
 
   function viewTeam(id) {
@@ -385,11 +409,11 @@
     const attn = D.FARMS.filter((f) => f.teamId === id && f.status === "attention").slice(0, 8);
     const acts = D.ACTIVITIES.filter((a) => a.teamId === id).slice(0, 6).map((a) => {
       const farm = D.byId(D.FARMS, a.farmId);
-      return `<article class="act"><a href="${href("farm/" + a.farmId)}">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<div class="ph">No media</div>`}<div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>`;
+      return a.photo ? `<article class="act"><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>` : "";
     }).join("");
     const districts = team.districts.map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
     return `<section class="ident ident-row">${teamMark(team)}<div>
-      <p class="mast-k">Team</p>
+      <p class="mast-k">Team operations</p>
       <h1>${esc(team.name)}</h1>
       <p>${districts}</p>
     </div></section>
@@ -430,7 +454,7 @@
     const slice = pageSlice(list, params.page);
     const rows = slice.rows.map((a) => {
       const st = D.agentStats(a.id);
-      return `<tr><td><a href="${href("agent/" + a.id)}">${esc(a.code)}</a></td><td>${esc(a.name)}</td><td><a href="${href("team/" + a.teamId)}">${esc(nameOf("team", a.teamId))}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.issues}</td><td>${st.progress}%</td></tr>`;
+      return `<tr><td><a href="${href("agent/" + a.id)}">${esc(a.code)}</a></td><td>${esc(a.name)}</td><td><a href="${href("team/" + a.teamId)}">${teamIdentity(D.byId(D.TEAMS, a.teamId))}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.issues}</td><td>${st.progress}%</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Field roster</p>
@@ -462,8 +486,8 @@
         <td>${farm ? statusBadge(farm.status) : ""}</td>
       </tr>`;
     }).join("");
-    return `<section class="ident"><div>
-      <p class="mast-k">Field agent · ${esc(team.name)}</p>
+    return `<section class="ident ident-row">${teamMark(team)}<div>
+      <p class="mast-k">Field agent</p>
       <h1>${esc(agent.code)}</h1>
       <p>${esc(agent.name)} · ${esc(nameOf("district", agent.districtId))}</p>
     </div></section>
@@ -500,7 +524,7 @@
       <td>${esc(f.code)}</td>
       <td>${esc(f.village)}</td>
       <td><a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a></td>
-      <td><a href="${href("team/" + f.teamId)}">${esc(nameOf("team", f.teamId))}</a></td>
+      <td><a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a></td>
       <td>${f.farmIds.length}</td>
       <td>${esc(stageLabel(f.stage))}</td>
     </tr>`).join("");
@@ -529,8 +553,8 @@
       const farm = D.byId(D.FARMS, fid);
       return `<a class="reg-row" href="${href("farm/" + fid)}"><b>${esc(farm.name)}</b><span>${farm.sizeAcres} acres · ${esc(farm.crop)}</span><em>${esc(stageLabel(farm.stage))}</em><em>${farm.progress}%</em></a>`;
     }).join("");
-    return `<section class="ident"><div>
-      <p class="mast-k">Farmer · ${esc(team.name)}</p>
+    return `<section class="ident ident-row">${teamMark(team)}<div>
+      <p class="mast-k">Farmer</p>
       <h1>${esc(f.name)}</h1>
       <p>${esc(f.code)} · ${esc(f.village)} · no phone, identity number or private contact is shown</p>
     </div></section>
@@ -567,7 +591,7 @@
       <td><a href="${href("farm/" + f.id)}">${esc(f.name)}</a></td>
       <td><a href="${href("farmer/" + f.farmerId)}">${esc(nameOf("farmer", f.farmerId))}</a></td>
       <td>${esc(nameOf("district", f.districtId))}</td>
-      <td><a href="${href("team/" + f.teamId)}">${esc(nameOf("team", f.teamId))}</a></td>
+      <td><a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a></td>
       <td>${esc(stageLabel(f.stage))}</td>
       <td>${f.progress}%</td>
       <td>${statusBadge(f.status)}</td>
@@ -611,9 +635,10 @@
     return `<section class="dossier">
       <figure class="dossier-visual"><img src="${esc(visual)}" alt="Field context for ${esc(farm.name)}"></figure>
       <div>
-        <p class="dossier-k">${farm.id === "maa-ganga" ? "Farm 360 · Demo farm · Flagship record" : "Farm 360 · Demo farm"}</p>
+        <p class="dossier-k">${farm.id === "maa-ganga" ? "Farm 360 · Flagship record" : "Farm 360"}</p>
         <h1>${esc(farm.name)}</h1>
-        <p class="dossier-place">${esc(nameOf("district", farm.districtId))} · ${esc(nameOf("ac", farm.acId))} · ${esc(team.name)}</p>
+        <p class="dossier-place">${esc(nameOf("district", farm.districtId))} · ${esc(nameOf("ac", farm.acId))}</p>
+        ${teamIdentity(team)}
         <dl class="dossier-meta">
           <div><dt>Who</dt><dd><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></dd></div>
           <div><dt>Where</dt><dd>${esc(farm.village)}</dd></div>
@@ -687,12 +712,12 @@
         const media = e.type === "video"
           ? `<video controls playsinline preload="metadata" poster="${esc(e.poster || "images/g-krl-mark.jpg")}"><source src="${esc(e.src)}" type="video/mp4"></video>`
           : `<img src="${esc(e.src)}" alt="${esc(e.title)}">`;
-        return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>Demo media · ${esc(e.type)} · ${esc(e.title)} · ${esc(farm.name)} · ${esc(e.date)} · ${esc(agent.code)}</figcaption></figure>`;
+        return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(captionFor(e.type, e.title))} · ${esc(farm.name)} · ${esc(e.date)}</figcaption></figure>`;
       }).join("");
       const ba = farm.beforeAfter
         ? `<h2 style="margin:22px 0 12px;font-size:18px">Before / after</h2><div class="ba">
-            <figure><img src="${esc(farm.beforeAfter.before.src)}" alt="Demo before frame"><figcaption>Demo media · Before. ${esc(farm.beforeAfter.before.caption)}</figcaption></figure>
-            <figure><img src="${esc(farm.beforeAfter.after.src)}" alt="Demo after frame"><figcaption>Demo media · After. ${esc(farm.beforeAfter.after.caption)}</figcaption></figure>
+            <figure><img src="${esc(farm.beforeAfter.before.src)}" alt="Demo before frame"><figcaption>Irrigation planning · ${esc(farm.beforeAfter.before.caption)}</figcaption></figure>
+            <figure><img src="${esc(farm.beforeAfter.after.src)}" alt="Demo after frame"><figcaption>Smart farming implementation · ${esc(farm.beforeAfter.after.caption)}</figcaption></figure>
           </div>`
         : "";
       return head + (ev.length ? `<div class="gallery">${gal}</div>${ba}` : empty("No evidence", "No photo or video is attached to this farm yet."));
@@ -739,7 +764,7 @@
         <h2 class="sec-title">Now on the farm</h2>
         <p class="now">${latest ? `${esc(latest.title)} · ${esc(latest.date)}` : "No current activity."}</p>
         <p class="now mute">${farm.alerts.length ? esc(farm.alerts.join("; ")) : "No alerts on this record."}</p>
-        ${ev.length ? ev.map((e) => `<figure class="now-fig"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>Demo media · ${esc(e.title)} · ${esc(e.date)}</figcaption></figure>`).join("") : empty("No media", "No evidence attached.")}
+        ${ev.length ? ev.map((e) => `<figure class="now-fig"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.date)}</figcaption></figure>`).join("") : ""}
         ${farmer.voice ? `<blockquote class="voice">${esc(farmer.voice)}</blockquote>` : ""}
       </aside>
     </div>`;
@@ -781,7 +806,7 @@
       const media = m.type === "video" && !String(m.src).includes("youtu")
         ? `<video controls playsinline preload="metadata" poster="${esc(m.poster || m.src)}"><source src="${esc(m.src)}" type="video/mp4"></video>`
         : `<img src="${esc(m.poster || m.src)}" alt="${esc(m.title)}">`;
-      return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>Programme archive · ${esc(m.title)} · ${esc(m.context)} · ${esc(m.date)}</figcaption></figure>`;
+      return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(m.title)} · ${esc(m.context)}</figcaption></figure>`;
     }).join("");
     const farmEv = D.FARMS.flatMap((f) => (f.evidence || []).map((e) => Object.assign({ farm: f }, e)));
     return `<section class="ident"><div>
@@ -792,7 +817,7 @@
       <h2 style="font-size:18px;margin:8px 0 12px">Programme archive</h2>
       <div class="gallery">${prog}</div>
       <h2 style="font-size:18px;margin:22px 0 12px">Farm evidence</h2>
-      ${farmEv.length ? `<div class="gallery">${farmEv.map((e) => `<figure><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>Demo media · ${esc(e.title)} · ${esc(e.farm.name)} · ${esc(e.date)}</figcaption></figure>`).join("")}</div>` : empty("No farm evidence", "Only the flagship farm carries attached media in this book.")}`;
+      ${farmEv.length ? `<div class="gallery">${farmEv.slice(0,5).map((e,i) => `<figure class="${i===0?"wide":""}"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.farm.name)}</figcaption></figure>`).join("")}</div>` : ""}`;
   }
 
   function viewReports() {
@@ -801,7 +826,7 @@
     const s = D.programmeStats();
     const teamRows = D.TEAMS.map((t) => {
       const st = D.teamStats(t.id);
-      return `<tr><td><a class="team-cell" href="${href("team/" + t.id)}">${t.logo ? `<img src="${esc(t.logo)}" alt="">` : ""}<span>${esc(t.name)}</span></a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.progress}%</td><td>${st.attention}</td></tr>`;
+      return `<tr><td><a href="${href("team/" + t.id)}">${teamIdentity(t)}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.progress}%</td><td>${st.attention}</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Operations</p>
