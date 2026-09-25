@@ -24,6 +24,7 @@
       reports: "Reports",
       product: "KRL Teams",
       know_more: "Know more",
+      menu: "Menu",
     },
     bn: {
       notice: "কেস-স্টাডি রেকর্ড এবং প্রকাশিত কর্মসূচি কাঠামো. চালু তালিকা নয়.",
@@ -39,8 +40,27 @@
       reports: "প্রতিবেদন",
       product: "কেআরএল টিমস",
       know_more: "আরও জানুন",
+      menu: "মেনু",
+    },
+    hi: {
+      notice: "केस-स्टडी रिकॉर्ड और प्रकाशित कार्यक्रम संरचना. चालू नामांकन नहीं.",
+      find: "उद्यमी, फार्म, क्षेत्र, टीम खोजें",
+      command: "कमांड",
+      geography: "भूगोल",
+      teams: "टीमें",
+      agents: "एजेंट",
+      farmers: "उद्यमी",
+      farms: "फार्म",
+      activity: "कार्य",
+      media: "मीडिया",
+      reports: "रिपोर्ट",
+      product: "केआरएल टीम्स",
+      know_more: "और जानें",
+      menu: "मेन्यू",
     },
   };
+
+  const LANGS = { en: "EN", bn: "বাং", hi: "हिं" };
 
   function lang() {
     try { return localStorage.getItem("krl-lang") || "en"; } catch (_) { return "en"; }
@@ -57,9 +77,13 @@
       const key = el.getAttribute("data-i18n");
       if (I18N[L] && I18N[L][key]) el.textContent = I18N[L][key];
     });
-    document.querySelectorAll(".lang button").forEach((b) => {
-      b.setAttribute("aria-pressed", b.dataset.lang === L ? "true" : "false");
+    const cur = document.getElementById("lang-current");
+    if (cur) cur.textContent = LANGS[L] || "EN";
+    document.querySelectorAll("#lang-menu [data-lang]").forEach((b) => {
+      b.setAttribute("aria-selected", b.dataset.lang === L ? "true" : "false");
     });
+    const find = document.getElementById("open-search");
+    if (find) find.setAttribute("aria-label", t("find"));
   }
 
   function esc(s) {
@@ -93,6 +117,7 @@
       if (!ac) return id;
       return ac.officialNo ? ac.officialNo + " – " + ac.name : ac.name;
     }
+    if (type === "zone") return (D.byId(D.ZONES, id) || {}).name || id;
     if (type === "team") return (D.byId(D.TEAMS, id) || {}).name || id;
     if (type === "agent") return (D.byId(D.AGENTS, id) || {}).code || id;
     if (type === "farmer") return (D.byId(D.FARMERS, id) || {}).name || id;
@@ -111,7 +136,10 @@
 
   function stageLabel(id) {
     const s = D.STAGES.find((x) => x.id === id);
-    return s ? (lang() === "bn" ? s.bn : s.label) : id;
+    if (!s) return id;
+    if (lang() === "bn") return s.bn || s.label;
+    if (lang() === "hi") return s.hi || s.label;
+    return s.label;
   }
 
   function statusBadge(status) {
@@ -123,6 +151,27 @@
 
   function teamRegion(team) {
     return (team.districts || []).map((id) => nameOf("district", id)).join(", ");
+  }
+
+  function teamZone(team) {
+    return team && team.zoneId ? D.byId(D.ZONES, team.zoneId) : null;
+  }
+
+  function assignedTeam(person) {
+    if (!person || !person.teamId) return null;
+    return D.byId(D.TEAMS, person.teamId) || null;
+  }
+
+  function teamNote(person) {
+    if (!person || !person.teamId) return "";
+    if (person.teamSource === "enrolled") return "Live team enrolment.";
+    if (person.teamSource === "named") return "Named to Himalayan Giants in Zone 1. Not inferred from Maynaguri geography. Not live enrolment.";
+    if (person.teamSource === "geography") return "Official team for this assembly geography. Not live enrolment.";
+    return "Team identity from the programme architecture. Not live enrolment.";
+  }
+
+  function peopleOfTeam(teamId) {
+    return D.FARMERS.filter((f) => f.teamId === teamId);
   }
 
 
@@ -148,6 +197,66 @@
     return (person && person.digital || []).filter((c) => c.url);
   }
 
+  function sourceVideos(person) {
+    return (person && person.videos) || [];
+  }
+
+  function ytThumb(id) {
+    return "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
+  }
+
+  function campaignDesk() {
+    const shots = [
+      { src: "images/campaign/hook-home.jpg", title: "Krishi Ratna League campaign story" },
+      { src: "images/campaign/farmer-journey.jpg", title: "Farmer journey campaign" },
+      { src: "images/campaign/come-home.jpg", title: "Come home to Bengal campaign" },
+      { src: "images/campaign/kolkata-farm.jpg", title: "Kolkata farm campaign" },
+    ];
+    return `<section class="campaign-desk">
+      <h2>League story</h2>
+      <p class="media-note">Campaign storyboards. Not verified farm evidence.</p>
+      <div class="campaign-grid">${shots.map((s) => `<figure><img src="${s.src}" alt="${esc(s.title)}"></figure>`).join("")}</div>
+    </section>`;
+  }
+
+  function gardenOnCamera() {
+    const people = D.FARMERS.filter((f) => sourceVideos(f).length);
+    if (!people.length) return "";
+    return `<section class="cinema-desk">
+      <p class="label">Garden on camera · source media</p>
+      <p class="media-note">Public YouTube from named Model Farmers. Not programme archive. Instagram is not shown — no confirmed handle.</p>
+      <div class="garden-cast">${people.map((f) => {
+        const clip = sourceVideos(f)[0];
+        const handles = digitalLinks(f).map((c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.handle)}</a>`).join(" · ");
+        return `<article class="cast">
+          <a class="story-still" href="${href("farmer/" + f.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>
+          <p class="label">${esc(f.gardenName || "Garden")}</p>
+          <h2><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></h2>
+          <p class="meta">${esc(clip.title)}</p>
+          ${handles ? `<p class="meta">${handles}</p>` : ""}
+        </article>`;
+      }).join("")}</div>
+    </section>`;
+  }
+
+  function cinemaStage(person) {
+    const videos = sourceVideos(person);
+    if (!videos.length) return "";
+    const lead = videos[0];
+    const rest = videos.slice(1, 5);
+    return `<section class="cinema" id="garden-film">
+      <p class="label">Garden on camera · source media</p>
+      <div class="cinema-stage">
+        <iframe src="https://www.youtube.com/embed/${esc(lead.youtubeId)}?rel=0" title="${esc(lead.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+      </div>
+      <p class="meta">${esc(lead.title)} · ${esc(lead.channel)}</p>
+      ${rest.length ? `<div class="film-strip">${rest.map((v) => `<a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">
+        <span class="film-still"><img src="${ytThumb(v.youtubeId)}" alt="${esc(v.title)}"></span>
+        <span>${esc(v.title)}</span>
+      </a>`).join("")}</div>` : ""}
+    </section>`;
+  }
+
   function placeParts(rec) {
     if (!rec) return [];
     return [
@@ -161,6 +270,109 @@
     const parts = placeParts(rec);
     if (withState && rec && rec.districtId) parts.push("West Bengal");
     return [...new Set(parts)].join(" · ");
+  }
+
+  function chainMarkup(items) {
+    const nodes = (items || []).filter((it) => it && it.label);
+    if (!nodes.length) return "";
+    return `<ol class="chain" aria-label="Geographic path">${nodes.map((it, i) => {
+      const body = it.href ? `<a href="${it.href}">${esc(it.label)}</a>` : `<span>${esc(it.label)}</span>`;
+      return `<li>${body}${i < nodes.length - 1 ? "<i></i>" : ""}</li>`;
+    }).join("")}</ol>`;
+  }
+
+  function farmerChain(person, farm) {
+    const team = assignedTeam(person);
+    const zone = teamZone(team);
+    const items = [{ href: href(""), label: "West Bengal" }];
+    if (person.teamSource === "named") {
+      if (person.acId) items.push({ href: href("ac/" + person.acId), label: person.village || nameOf("ac", person.acId) });
+      else if (person.village) items.push({ label: person.village });
+      if (zone) items.push({ href: href("zone/" + zone.id), label: zone.name });
+      if (team) items.push({ href: href("team/" + team.id), label: team.name });
+    } else {
+      if (person.districtId) items.push({ href: href("district/" + person.districtId), label: nameOf("district", person.districtId) });
+      if (person.acId) items.push({ href: href("ac/" + person.acId), label: nameOf("ac", person.acId) });
+      if (team) items.push({ href: href("team/" + team.id), label: team.name });
+    }
+    items.push({ href: href("farmer/" + person.id), label: person.name });
+    if (farm) items.push({ href: href("farm/" + farm.id), label: farm.name });
+    return chainMarkup(items);
+  }
+
+  function digitalDesk(person) {
+    const channels = digitalLinks(person);
+    const videos = sourceVideos(person);
+    if (!channels.length && !videos.length) return "";
+    const yt = channels.find((c) => /youtube/i.test(c.network));
+    const fb = channels.find((c) => /facebook/i.test(c.network));
+    const extra = channels.filter((c) => c !== yt && c !== fb);
+    return `<section class="digital-desk reveal" id="digital">
+      <h2>Digital presence</h2>
+      <p class="media-note">Public source channels. Not treated as field-verified evidence. Instagram is not shown.</p>
+      <div class="digital-grid">
+        ${yt ? `<article class="digital-tile">
+          <p class="label">YouTube</p>
+          <a href="${esc(yt.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(yt.handle)}</strong></a>
+          ${videos[0] ? `<a class="story-still" href="${esc(videos[0].url)}" target="_blank" rel="noopener noreferrer"><img src="${ytThumb(videos[0].youtubeId)}" alt="${esc(videos[0].title)}"></a>` : ""}
+        </article>` : ""}
+        ${fb ? `<article class="digital-tile">
+          <p class="label">Facebook</p>
+          <a href="${esc(fb.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(fb.handle)}</strong></a>
+          <p class="meta">Known reel. No local still is stored for this post.</p>
+        </article>` : ""}
+        ${extra.map((c) => `<article class="digital-tile"><p class="label">${esc(c.network)}</p><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(c.handle)}</strong></a></article>`).join("")}
+      </div>
+    </section>`;
+  }
+
+  function playerHero(person) {
+    const farm = D.byId(D.FARMS, person.farmIds[0]);
+    const team = assignedTeam(person);
+    const zone = teamZone(team);
+    const clip = sourceVideos(person)[0];
+    const channels = digitalLinks(person);
+    return `<section class="player"${team ? ` style="--accent:${esc(team.accent)}"` : ""}>
+      ${clip ? `<figure class="player-still">
+        <img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}">
+        <figcaption>Source film · ${esc(clip.title)}. Not a field portrait.</figcaption>
+      </figure>` : ""}
+      <div class="player-copy">
+        <p class="label">Model Farmer</p>
+        <h1>${esc(person.name)}</h1>
+        ${person.gardenName ? `<p class="player-garden">${esc(person.gardenName)}</p>` : ""}
+        ${farmerChain(person, farm)}
+        ${team ? `<div class="player-team">${teamIdentity(team, zone ? zone.name : teamRegion(team))}</div>` : ""}
+        ${teamNote(person) ? `<p class="meta">${esc(teamNote(person))}</p>` : ""}
+        ${channels.length ? `<ul class="presence">${channels.map((c) => `<li><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.network)} · ${esc(c.handle)}</a></li>`).join("")}</ul>` : ""}
+        <p class="story-links">
+          ${farm ? `<a class="btn" href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}
+          ${clip ? `<button type="button" class="btn ghost" data-jump="garden-film">Watch garden</button>` : ""}
+        </p>
+      </div>
+    </section>`;
+  }
+
+  function squadCard(person) {
+    const farm = D.byId(D.FARMS, person.farmIds[0]);
+    const clip = sourceVideos(person)[0];
+    const team = assignedTeam(person);
+    return `<article class="squad-card reveal">
+      ${clip ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>` : ""}
+      <h3><a href="${href("farmer/" + person.id)}">${esc(person.name)}</a></h3>
+      ${person.gardenName ? `<p class="story-garden">${esc(person.gardenName)}</p>` : ""}
+      ${team ? teamIdentity(team) : ""}
+      ${farmerChain(person, farm)}
+      <p class="story-links"><a class="btn" href="${href("farmer/" + person.id)}">Open profile</a>${farm ? `<a href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}</p>
+    </article>`;
+  }
+
+  function squadBlock(people, title) {
+    if (!people.length) return "";
+    return `<section class="squad">
+      <h2>${esc(title)}</h2>
+      <div class="squad-grid">${people.map(squadCard).join("")}</div>
+    </section>`;
   }
 
   function dash(v) {
@@ -199,8 +411,7 @@
         <h2>Explore more stories, photographs, event coverage and media.</h2>
         <p>KRL Media Connect remains a separate product. This command centre stays here.</p>
         <a class="know-more-link" href="${MEDIA_CONNECT}" target="_blank" rel="noopener noreferrer">
-          <span>Know more</span>
-          <span lang="bn">আরও জানুন</span>
+          <span>${esc(t("know_more"))}</span>
         </a>
       </div>
     </aside>`;
@@ -227,9 +438,10 @@
       if (st.farmers) known.push(st.farmers + (st.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs"));
       if (st.farms) known.push(st.farms + (st.farms === 1 ? " farm" : " farms"));
       if (st.agents) known.push(st.agents + (st.agents === 1 ? " agent" : " agents"));
+      const zone = teamZone(t);
       return '<a class="reg-team" href="' + href("team/" + t.id) + '">' +
         teamMark(t) +
-        "<div><strong>" + esc(t.name) + "</strong><span>" + esc(teamRegion(t)) + "</span></div>" +
+        "<div><strong>" + esc(t.name) + "</strong><span>" + esc(teamRegion(t)) + (zone ? " · " + esc(zone.name) : "") + "</span></div>" +
         "<span>" + st.acs + " assembly seats</span>" +
         "<span>" + (known.length ? known.join(" · ") : "Geography assigned") + "</span></a>";
     }).join("");
@@ -292,49 +504,90 @@
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
     const s = D.programmeStats();
     const cases = D.FARMERS.filter((f) => f.kind === "case-study");
-    const caseCards = cases.map((person) => {
+    const caseStories = cases.map((person) => {
       const farm = D.byId(D.FARMS, person.farmIds[0]);
       const place = placeLine(person, false);
       const channels = digitalLinks(person).map((c) => esc(c.network)).join(" · ");
-      return `<article class="case-card">
-        <p class="geo-kicker">Model Farmer / Agri-entrepreneur</p>
+      const clip = sourceVideos(person)[0];
+      return `<article class="story reveal">
+        ${clip ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>` : ""}
         <h2>${esc(person.name)}</h2>
-        <p class="case-garden">${esc(person.gardenName || (farm && farm.name) || "")}</p>
-        ${place ? `<p class="dossier-place">${esc(place)}</p>` : ""}
-        ${channels ? `<p class="mast-sub">Digital presence · ${channels}</p>` : ""}
-        <p><a href="${href("farmer/" + person.id)}">Open case study</a>${farm ? ` · <a href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}</p>
+        <p class="story-garden">${esc(person.gardenName || (farm && farm.name) || "")}</p>
+        ${farmerChain(person, farm)}
+        ${place ? `<p class="meta">${esc(place)}</p>` : ""}
+        ${person.practice ? `<p class="meta">${esc(person.practice)}</p>` : ""}
+        ${channels ? `<p class="meta">Digital presence · ${channels}</p>` : ""}
+        <p class="story-links"><a class="btn" href="${href("farmer/" + person.id)}">Open case study</a>${farm ? `<a href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}</p>
       </article>`;
     }).join("");
+    const crests = D.TEAMS.map((t) => `<a class="crest" href="${href("team/" + t.id)}"><img src="${esc(t.logo)}" alt="${esc(t.name)}"><b>${esc(t.short)}</b></a>`).join("");
+    const fan = D.TEAMS.map((t) => {
+      const zone = teamZone(t);
+      return `<a class="fan-cell" href="${href("team/" + t.id)}" style="--accent:${esc(t.accent)}">
+        <img src="${esc(t.logo)}" alt="${esc(t.name)}">
+        <span>${esc(t.short)}</span>
+        <strong>${esc(t.name)}</strong>
+        <em>${esc(zone ? zone.name : teamRegion(t))}</em>
+      </a>`;
+    }).join("");
+    const axes = [
+      { id: "sat", src: "images/campaign/intelligence.jpg", title: "Satya", line: "Record what is known. Hide what is not." },
+      { id: "mangalmay", src: "images/campaign/living-system.jpg", title: "Mangalmay", line: "Smart practice on the garden, when evidenced." },
+      { id: "sundar", src: "images/campaign/ten-forces.jpg", title: "Sundar", line: "Farm design that can be seen, not invented." },
+      { id: "samriddhi", src: "images/campaign/food-soil.jpg", title: "Samriddhi", line: "Prosperity as a programme aim, not a fake score." },
+    ].map((ax) => `<article class="axis reveal"><img src="${ax.src}" alt="${esc(ax.title)}"><div><h3>${esc(ax.title)}</h3><p>${esc(ax.line)}</p></div></article>`).join("");
+    const session = D.mediaWhere("link")[0];
 
-    return `
-      <header class="mast">
-        <div>
-          <p class="mast-k">Krishi Ratna League · Bharatiya Krishak Samaj</p>
-          <h1>Smart Farming<br>Command Centre</h1>
-          <p class="mast-place">West Bengal</p>
-          <p class="mast-sub">State to constituency to team to agri-entrepreneur to farm.</p>
+    return `<div data-motion="command">
+      <section class="arena">
+        <div class="arena-copy">
+          <p class="label">Krishi Ratna League</p>
+          <h1>The field is the farm.<br>The farmer is the champion.</h1>
+          <p class="lede">A fifteen-team network for West Bengal. Named gardens are on camera. Geography is the operating system. Farm 360 opens only where a holding is known.</p>
+          <div class="arena-cta">
+            <a class="btn" href="${href("teams")}">Open teams</a>
+            <a class="btn ghost" href="${href("farmer/amit-shill")}">Watch gardens</a>
+          </div>
         </div>
-        <div class="mast-aside">
-          <div><strong>Programme target</strong> ${s.targetFarmers.toLocaleString("en-IN")} farmers</div>
-          <div><strong>State frame</strong> ${s.districts} districts · ${s.acs} assembly constituencies</div>
-          <div><strong>Demo book</strong> ${s.demoFarmers} farmers · ${s.demoFarms} farms · ${s.demoAgents} agents</div>
-        </div>
-      </header>
-      <dl class="scale">
-        <a href="${href("farmers")}"><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd><small>Published ambition, not enrolment</small></a>
-        <a href="${href("geo")}"><dt>Assembly seats</dt><dd>${s.acs}</dd><small>${s.districts} districts</small></a>
-        <a href="${href("teams")}"><dt>Official teams</dt><dd>${s.teams}</dd><small>Current league identities</small></a>
-        <a href="${href("farmers")}"><dt>Case studies</dt><dd>${s.caseStudies}</dd><small>Named agri-entrepreneurs</small></a>
-      </dl>
-      <section class="geo-command">
-        <div>
-          <p class="geo-kicker">Programme Geographic View</p>
-          <h2 class="sec-title" style="margin-top:0">West Bengal</h2>
-          ${wbMap(false)}
-        </div>
-        <div class="case-rail">${caseCards}</div>
+        <figure class="arena-film" aria-hidden="true">
+          <div class="arena-slides">
+            <img src="images/campaign/your-league.jpg" alt="">
+            <img src="images/campaign/scoreboard.jpg" alt="">
+            <img src="images/campaign/field-league.jpg" alt="">
+            <img src="images/campaign/pavilion.jpg" alt="">
+          </div>
+        </figure>
       </section>
-      ${leagueBoard()}`;
+      <div class="crest-marquee" aria-label="Official teams">
+        <div class="crest-track">${crests}${crests}</div>
+      </div>
+      <section class="scale-band reveal">
+        <div><b>${s.acs}</b><span>Assembly seats in the state frame</span></div>
+        <div><b>${s.teams}</b><span>Official league identities</span></div>
+        <div><b>${s.targetFarmers.toLocaleString("en-IN")}</b><span>Programme target, not enrolment</span></div>
+      </section>
+      <section class="axis-grid">${axes}</section>
+      <section class="case-band">
+        <header class="sec-head">
+          <h2>Gardens on camera</h2>
+          <p>Source YouTube from named Model Farmers. Instagram is not shown.</p>
+        </header>
+        <div class="story-split">${caseStories}</div>
+      </section>
+      <section class="fan-wrap reveal">
+        <h2>Fifteen crests</h2>
+        <div class="fan-row">${fan}</div>
+      </section>
+      <section class="campaign-desk reveal">
+        <h2>League story</h2>
+        <p class="media-note">Campaign storyboards. Not verified farm evidence and not live enrolment.</p>
+        <div class="campaign-grid">
+          <figure class="wide"><img src="images/campaign/puja-days.jpg" alt="Puja days campaign"></figure>
+        </div>
+      </section>
+      ${session ? `<p class="session-link">Programme session film · <a href="${esc(session.src)}" target="_blank" rel="noopener noreferrer">${esc(session.caption)}</a></p>` : ""}
+      ${leagueBoard()}
+    </div>`;
   }
 
   function districtTone(st) {
@@ -358,7 +611,7 @@
       return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers ? st.farmers + (st.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs") : st.acs + " ACs"}</em>${st.farmers ? `<span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ""}</a>`;
     }).join("");
     return `<div class="geo-frame">
-      <div class="geo-stage">
+      <div class="geo-stage${withList === false ? " geo-stage-hero" : ""}">
         <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
         <div class="geo-marks">${marks}</div>
       </div>
@@ -386,16 +639,20 @@
     const st = D.districtStats(id);
     crumb([{ href: "#/", label: "West Bengal" }, { href: href("geo"), label: "Geography" }, { label: d.name }]);
     const team = D.TEAMS.find((t) => t.districts.includes(id));
+    const zone = teamZone(team);
     const list = D.ACS.filter((a) => a.districtId === id).map((a) => {
       const as = D.acStats(a.id);
       const known = as.farmers ? as.farmers + (as.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs") + " · " + as.farms + (as.farms === 1 ? " farm" : " farms") : "In the state frame";
       return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.officialNo ? a.officialNo + " – " + a.name : a.name)}</b><span>${known}</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
     }).join("");
+    const locals = D.FARMERS.filter((f) => f.districtId === id);
     return `<section class="ident"><div>
       <p class="mast-k">District</p>
       <h1>${esc(d.name)}</h1>
-      ${team ? teamIdentity(team) : ""}
+      ${team ? teamIdentity(team, zone ? zone.name + " · " + teamRegion(team) : "") : ""}
+      ${zone ? `<p class="meta"><a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a></p>` : ""}
       <p>${d.acs.length} assembly constituencies in the state frame</p>
+      ${locals.some((f) => f.teamId && team && f.teamId !== team.id) ? `<p class="meta">Named Model Farmers may belong to a different team than this district geography.</p>` : ""}
     </div></section>
     <dl class="ledger">
       <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
@@ -404,6 +661,7 @@
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
       <div><dt>ACs in frame</dt><dd>${st.acs}</dd></div>
     </dl>
+    ${squadBlock(locals, "Named agri-entrepreneurs")}
     <section class="register">
       <h2 class="sec-title">Assembly constituencies</h2>
       ${list}
@@ -425,13 +683,15 @@
     const people = D.FARMERS.filter((f) => f.acId === id);
     const rows = people.slice(0, 40).map((f) => {
       const farm = D.byId(D.FARMS, f.farmIds[0]);
-      return `<tr><td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td><td><a href="${href("farm/" + (farm ? farm.id : ""))}">${esc(farm ? farm.name : "—")}</a></td><td>${f.kind === "case-study" ? "Case study" : esc(stageLabel(f.stage))}</td><td></td></tr>`;
+      const personTeam = assignedTeam(f);
+      return `<tr><td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td><td><a href="${href("farm/" + (farm ? farm.id : ""))}">${esc(farm ? farm.name : "—")}</a></td><td>${personTeam ? `<a href="${href("team/" + personTeam.id)}">${esc(personTeam.name)}</a>` : "—"}</td><td>${f.kind === "case-study" ? "Case study" : esc(stageLabel(f.stage))}</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Assembly constituency</p>
       <h1>${esc(ac.officialNo ? ac.officialNo + " – " + ac.name : ac.name)}</h1>
       ${teamIdentity(team)}
       <p>${esc(d.name)} · target ${D.META.targetPerAc} farms at full book</p>
+      ${people.some((f) => f.teamId && f.teamId !== ac.teamId) ? `<p class="meta">Named Model Farmers may belong to a different team than this assembly geography.</p>` : ""}
     </div></section>
     <dl class="ledger">
       <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
@@ -439,7 +699,7 @@
       <div><dt>Teams</dt><dd>${st.teams}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
     </dl>
-    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Agri-entrepreneur</th><th>Farm</th><th>Record</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
+    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Agri-entrepreneur</th><th>Farm</th><th>Team</th><th>Record</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
   }
 
   function viewTeams() {
@@ -452,11 +712,39 @@
     </div></section>${leagueBoard()}`;
   }
 
+  function viewZone(id) {
+    setNav("teams");
+    const zone = D.byId(D.ZONES, id);
+    if (!zone) return notFound("Zone", id);
+    crumb([{ href: "#/", label: "West Bengal" }, { href: href("teams"), label: "Teams" }, { label: zone.name }]);
+    const teams = D.teamsOfZone(zone.id);
+    const rows = teams.map((t) => {
+      const st = D.teamStats(t.id);
+      return `<a class="reg-team" href="${href("team/" + t.id)}">${teamMark(t)}<div><strong>${esc(t.name)}</strong><span>${esc(teamRegion(t))}</span></div><span>${st.acs} assembly seats</span><span>Geography assigned</span></a>`;
+    }).join("");
+    const districts = [...new Set(teams.flatMap((t) => t.districts || []))].map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
+    const zonePeople = teams.flatMap((t) => peopleOfTeam(t.id));
+    return `<section class="ident"><div>
+      <p class="mast-k">Programme zone</p>
+      <h1>${esc(zone.name)}</h1>
+      <p>Named zone assignment only. Other teams are not placed in a zone until a source says so.</p>
+      ${districts ? `<p class="meta">${districts}</p>` : ""}
+    </div></section>
+    ${squadBlock(zonePeople, "Named agri-entrepreneurs")}
+    <section class="league" style="margin-top:0">
+      <div class="register-list">${rows}</div>
+    </section>`;
+  }
+
   function viewTeam(id) {
     setNav("teams");
     const team = D.byId(D.TEAMS, id);
     if (!team || team.placeholder) return notFound("Team", id);
-    crumb([{ href: "#/", label: "West Bengal" }, { href: href("teams"), label: "Teams" }, { label: team.name }]);
+    const zone = teamZone(team);
+    const crumbs = [{ href: "#/", label: "West Bengal" }, { href: href("teams"), label: "Teams" }];
+    if (zone) crumbs.push({ href: href("zone/" + zone.id), label: zone.name });
+    crumbs.push({ label: team.name });
+    crumb(crumbs);
     const st = D.teamStats(id);
     const teamAgents = D.AGENTS.filter((a) => a.teamId === id);
     const agentRows = teamAgents.map((a) => {
@@ -470,9 +758,11 @@
     }).join("");
     const districts = team.districts.map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
     const acList = D.ACS.filter((a) => a.teamId === id).map((a) => `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${esc(nameOf("district", a.districtId))}</span><em></em><em></em></a>`).join("");
+    const squad = peopleOfTeam(id);
     return `<section class="ident ident-row">${teamMark(team)}<div>
       <p class="mast-k">Team operations</p>
       <h1>${esc(team.name)}</h1>
+      ${zone ? `<p class="story-garden"><a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a></p>` : ""}
       <p>${districts}</p>
     </div></section>
     <dl class="ledger">
@@ -482,6 +772,7 @@
       <div><dt>ACs</dt><dd>${st.acs}</dd></div>
       <div><dt>Districts</dt><dd>${team.districts.length}</dd></div>
     </dl>
+    ${squadBlock(squad, "Named agri-entrepreneurs")}
     ${teamAgents.length ? `<section>
       <h2 class="sec-title">Agents</h2>
       <div class="register">${agentRows}</div>
@@ -560,71 +851,99 @@
     if (params.team) list = list.filter((f) => f.teamId === params.team);
     if (params.district) list = list.filter((f) => f.districtId === params.district);
     const slice = pageSlice(list, params.page);
-    const rows = slice.rows.map((f) => `<tr>
+    const cast = list.filter((f) => sourceVideos(f).length).map((f) => {
+      const clip = sourceVideos(f)[0];
+      return `<article class="cast">
+        <a class="story-still" href="${href("farmer/" + f.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>
+        <p class="label">${esc(f.gardenName || "Garden")}</p>
+        <h2><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></h2>
+        <p class="meta">${esc(clip.title)}</p>
+      </article>`;
+    }).join("");
+    const rows = slice.rows.map((f) => {
+      const personTeam = assignedTeam(f);
+      return `<tr>
       <td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td>
       <td><a href="${href("farm/" + f.farmIds[0])}">${esc(f.gardenName || "—")}</a></td>
       <td>${esc(placeLine(f, false) || "—")}</td>
+      <td>${personTeam ? `<a href="${href("team/" + personTeam.id)}">${esc(personTeam.name)}</a>` : "—"}</td>
       <td>${f.districtId ? `<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>` : "—"}</td>
       <td>${f.acId ? `<a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a>` : "—"}</td>
-      <td>${f.farmIds.length}</td>
-    </tr>`).join("");
+    </tr>`;
+    }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">People</p>
       <h1>Agri-entrepreneurs</h1>
       <p>${list.length} named ${list.length === 1 ? "Model Farmer case study" : "Model Farmer case studies"}. A person may hold more than one farm or garden.</p>
     </div></section>
+      ${cast ? `<section class="garden-cast">${cast}</section>` : ""}
       ${filtersBar(params)}
-      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Model Farmer</th><th>Farm / garden</th><th>Known location</th><th>District</th><th>Assembly seat</th><th>Holdings</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farmers", slice, params)}` : ""}`;
+      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Model Farmer</th><th>Farm / garden</th><th>Known location</th><th>Team</th><th>District</th><th>Assembly seat</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farmers", slice, params)}` : ""}`;
   }
 
   function viewFarmer(id) {
     setNav("farmers");
     const f = D.byId(D.FARMERS, id);
     if (!f) return notFound("Agri-entrepreneur", id);
-    const team = (f.teamId && f.teamSource === "enrolled") ? D.byId(D.TEAMS, f.teamId) : null;
-    const crumbs = [{ href: "#/", label: "West Bengal" }];
-    if (f.districtId) crumbs.push({ href: href("district/" + f.districtId), label: nameOf("district", f.districtId) });
-    if (f.acId) crumbs.push({ href: href("ac/" + f.acId), label: nameOf("ac", f.acId) });
-    else if (f.village) crumbs.push({ label: f.village });
+    const team = assignedTeam(f);
+    const zone = teamZone(team);
+    const farm0 = D.byId(D.FARMS, f.farmIds[0]);
+    const crumbs = [{ href: href(""), label: "West Bengal" }];
+    if (f.teamSource === "named") {
+      if (f.acId) crumbs.push({ href: href("ac/" + f.acId), label: f.village || nameOf("ac", f.acId) });
+      else if (f.village) crumbs.push({ label: f.village });
+      if (zone) crumbs.push({ href: href("zone/" + zone.id), label: zone.name });
+      if (team) crumbs.push({ href: href("team/" + team.id), label: team.name });
+    } else {
+      if (f.districtId) crumbs.push({ href: href("district/" + f.districtId), label: nameOf("district", f.districtId) });
+      if (f.acId) crumbs.push({ href: href("ac/" + f.acId), label: nameOf("ac", f.acId) });
+      if (team) crumbs.push({ href: href("team/" + team.id), label: team.name });
+    }
     crumbs.push({ label: f.name });
     crumb(crumbs);
-    const place = placeLine(f, !!f.districtId);
     const farmRows = f.farmIds.map((fid) => {
       const farm = D.byId(D.FARMS, fid);
       if (!farm) return "";
       const meta = [farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ");
       return `<a class="reg-row" href="${href("farm/" + fid)}"><b>${esc(farm.name)}</b><span>${esc(meta || "Named garden / farm record")}</span><em></em><em></em></a>`;
     }).join("");
-    const digital = digitalLinks(f).map((c) => `<a class="ops-line" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer"><time>${esc(c.network)}</time><div><strong>${esc(c.handle)}</strong><p>Source reference. Not treated as verified field evidence.</p></div></a>`).join("");
-    return `<section class="ident model-ident">
-      <p class="mast-k">Model Farmer / Agri-entrepreneur</p>
-      <h1>${esc(f.name)}</h1>
-      <p class="case-garden">${esc(f.gardenName || "")}</p>
-      ${place ? `<p class="dossier-place">${esc(place)}</p>` : ""}
-    </section>
-    <div class="narrative">
-      <ol class="spine">
-        <li><h3>Who</h3><p>${esc(f.name)}</p></li>
-        <li><h3>Farm / garden</h3><p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")}</p></li>
-        ${place ? `<li><h3>Where</h3><p>${f.districtId ? `<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>` : ""}${f.acId ? ` · <a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a>` : ""}${f.village && !f.acId && !f.districtId ? esc(f.village) : (f.village ? " · " + esc(f.village) : "")}${f.districtId ? " · West Bengal" : ""}</p></li>` : ""}
-        ${team ? `<li><h3>Programme / team</h3><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a></p></li>` : ""}
-        ${f.practice ? `<li><h3>What they grow / do</h3><p>${esc(f.practice)}</p></li>` : ""}
-        ${f.space ? `<li><h3>Farm space</h3><p>${esc(f.space)}</p></li>` : ""}
-        ${f.vision ? `<li><h3>Smart farming</h3><p>${esc(f.vision)}</p></li>` : ""}
-        ${f.story ? `<li><h3>Farm story</h3><p>${esc(f.story)}</p></li>` : ""}
-      </ol>
-      <aside>
-        <h2 class="sec-title">Record standing</h2>
-        <p class="now">Named Model Farmer case study. Only supported facts are shown.</p>
-        <p class="now mute">Unsupported fields — farm size, crops, production, contact, GPS, team enrolment — remain hidden until evidenced.</p>
-        ${f.farmIds[0] ? `<p class="session-link"><a href="${href("farm/" + f.farmIds[0])}">Open Farm 360</a></p>` : ""}
-      </aside>
-    </div>
-    ${digital ? `<section><h2 class="sec-title">Digital presence</h2>${digital}</section>` : ""}
-    <section class="register">
-      <h2 class="sec-title">Farms / gardens</h2>
-      ${farmRows}
-    </section>`;
+    const whereBits = [];
+    if (f.acId) {
+      const acName = nameOf("ac", f.acId);
+      whereBits.push(`<a href="${href("ac/" + f.acId)}">${esc(f.village && f.village !== acName ? f.village + " · " + acName : acName)}</a>`);
+    } else if (f.village) {
+      whereBits.push(esc(f.village));
+    }
+    if (f.districtId && f.teamSource !== "named") whereBits.push(`<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>`);
+    if (zone) whereBits.push(`<a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>`);
+    if (team) whereBits.push(`<a href="${href("team/" + team.id)}">${esc(team.name)}</a>`);
+    whereBits.push("West Bengal");
+    return `<div data-motion="page">
+      ${playerHero(f)}
+      <section class="story-chapters">
+        <article class="reveal">
+          <h2>The entrepreneur</h2>
+          <p>${esc(f.name)} is a named Model Farmer. The record stays with the person, not the holding.</p>
+        </article>
+        <article class="reveal">
+          <h2>The farm</h2>
+          <p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")} is the known garden. Size, yield and plots stay hidden until evidenced.</p>
+        </article>
+        ${whereBits.length ? `<article class="reveal"><h2>The geography</h2><p>${whereBits.join(" · ")}</p></article>` : ""}
+        ${team ? `<article class="reveal"><h2>The team</h2><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${zone ? ` · <a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>` : ""}. ${esc(teamNote(f))}</p></article>` : ""}
+        ${f.practice ? `<article class="reveal"><h2>The practice</h2><p>${esc(f.practice)}</p></article>` : ""}
+        ${f.space ? `<article class="reveal"><h2>The farm space</h2><p>${esc(f.space)}</p></article>` : ""}
+        ${f.vision ? `<article class="reveal"><h2>The vision</h2><p>${esc(f.vision)}</p></article>` : ""}
+        ${f.story ? `<article class="reveal"><h2>The journey</h2><p>${esc(f.story)}</p></article>` : ""}
+        ${f.farmIds[0] ? `<article class="reveal"><h2>The Farm 360</h2><p><a href="${href("farm/" + f.farmIds[0])}">Open the holding record</a> for people, source channels and what is known.</p></article>` : ""}
+      </section>
+      ${cinemaStage(f)}
+      ${digitalDesk(f)}
+      <section class="register">
+        <h2 class="sec-title">Farms / gardens</h2>
+        ${farmRows}
+      </section>
+    </div>`;
   }
 
   function viewFarms(params) {
@@ -660,23 +979,34 @@
 
   function farmHeader(farm) {
     const farmer = D.byId(D.FARMERS, farm.farmerId);
-    const team = (farm.teamId && farmer && farmer.teamSource === "enrolled") ? D.byId(D.TEAMS, farm.teamId) : null;
-    const crumbs = [{ href: "#/", label: "West Bengal" }];
-    if (farm.districtId) crumbs.push({ href: href("district/" + farm.districtId), label: nameOf("district", farm.districtId) });
-    if (farm.acId) crumbs.push({ href: href("ac/" + farm.acId), label: nameOf("ac", farm.acId) });
-    else if (farm.village) crumbs.push({ label: farm.village });
+    const team = assignedTeam(farmer) || (farm.teamId ? D.byId(D.TEAMS, farm.teamId) : null);
+    const zone = teamZone(team);
+    const crumbs = [{ href: href(""), label: "West Bengal" }];
+    if (farmer && farmer.teamSource === "named") {
+      if (farm.acId) crumbs.push({ href: href("ac/" + farm.acId), label: farm.village || nameOf("ac", farm.acId) });
+      else if (farm.village) crumbs.push({ label: farm.village });
+      if (zone) crumbs.push({ href: href("zone/" + zone.id), label: zone.name });
+      if (team) crumbs.push({ href: href("team/" + team.id), label: team.name });
+    } else {
+      if (farm.districtId) crumbs.push({ href: href("district/" + farm.districtId), label: nameOf("district", farm.districtId) });
+      if (farm.acId) crumbs.push({ href: href("ac/" + farm.acId), label: nameOf("ac", farm.acId) });
+      if (team) crumbs.push({ href: href("team/" + team.id), label: team.name });
+    }
     crumbs.push({ href: href("farmer/" + farm.farmerId), label: farmer.name });
     crumbs.push({ label: farm.name });
     crumb(crumbs);
     const visual = farm.contextualMediaId ? D.mediaById(farm.contextualMediaId) : null;
+    const clip = !visual && farmer ? sourceVideos(farmer)[0] : null;
     const place = placeLine(farm, !!farm.districtId);
-    return `<section class="dossier${visual ? "" : " dossier-plain"}">
-      ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : ""}
+    return `<section class="dossier${visual || clip ? "" : " dossier-plain"}">
+      ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : clip ? `<figure class="dossier-visual"><a class="story-still" href="${href("farmer/" + farmer.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a></figure>` : ""}
       <div>
-        <p class="dossier-k">${farm.kind === "case-study" ? "Farm 360 · Model Farmer holding" : "Farm 360"}</p>
+        <p class="label">${farm.kind === "case-study" ? "Farm 360 · Model Farmer holding" : "Farm 360"}</p>
         <h1>${esc(farm.name)}</h1>
-        ${place ? `<p class="dossier-place">${esc(place)}</p>` : ""}
-        ${team ? teamIdentity(team) : ""}
+        ${farmerChain(farmer, farm)}
+        ${place ? `<p class="meta">${esc(place)}</p>` : ""}
+        ${team ? teamIdentity(team, zone ? zone.name : "") : ""}
+        ${farmer ? `<p class="meta">${esc(teamNote(farmer))}</p>` : ""}
         <dl class="dossier-meta">
           <div><dt>Who</dt><dd><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></dd></div>
           ${place ? `<div><dt>Where</dt><dd>${esc(place)}</dd></div>` : ""}
@@ -766,15 +1096,18 @@
         <small>${esc(c.network)}</small>
         <strong><a href="${esc(c.url)}" rel="noopener noreferrer" target="_blank">${esc(c.handle)}</a></strong>
       </article>`).join("");
-      return head + `<p>${esc((farm.social && farm.social.note) || "")}</p><div class="people" style="margin-top:14px">${rows}</div>`;
+      const owner = D.byId(D.FARMERS, farm.farmerId);
+      return head + cinemaStage(owner) + `<p>${esc((farm.social && farm.social.note) || "")}</p><div class="people" style="margin-top:14px">${rows}</div>`;
     }
 
     const where = placeLine(farm, !!farm.districtId);
+    const farmTeam = assignedTeam(farmer);
     return head + `<div class="narrative">
       <ol class="spine">
         <li><h3>Who</h3><p><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></p></li>
         ${where ? `<li><h3>Where</h3><p>${esc(where)}</p></li>` : ""}
         <li><h3>Farm / garden</h3><p>${esc(farm.name)}</p></li>
+        ${farmTeam ? `<li><h3>Team</h3><p><a href="${href("team/" + farmTeam.id)}">${esc(farmTeam.name)}</a></p></li>` : ""}
         ${farm.sizeAcres != null || farm.crop ? `<li><h3>What they grow / do</h3><p>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</p></li>` : ""}
         ${allowed.includes("people") ? `<li><h3>People</h3><p><a href="${href("farm/" + farm.id + "/people")}">Support network</a></p></li>` : ""}
         ${allowed.includes("social") ? `<li><h3>Digital presence</h3><p><a href="${href("farm/" + farm.id + "/social")}">Source channels</a></p></li>` : ""}
@@ -822,33 +1155,35 @@
     const session = D.mediaWhere("link")[0];
     const feat = featured[0];
     return `<section class="ident"><div>
-      <p class="mast-k">Archive</p>
+      <p class="label">Archive</p>
       <h1>Media</h1>
-      <p>Editorially curated stills. Each photograph appears once, in its own context.</p>
+      <p class="lede">Editorially curated stills. Each photograph appears once, in its own context.</p>
     </div></section>
-      ${feat ? `<section class="media-feature">
-        <p class="sec-k">Featured media</p>
-        <figure>
+      ${feat || supporting.length ? `<section class="media-desk">
+        ${feat ? `<figure class="media-lead">
+          <p class="label">Featured · editorial / programme</p>
           <img src="${esc(feat.src)}" alt="${esc(feat.caption)}">
           <figcaption>${esc(feat.caption)} · ${esc(feat.context)}${feat.date ? " · " + esc(feat.date) : ""}</figcaption>
-        </figure>
+        </figure>` : ""}
+        ${supporting.length ? `<div class="media-col">
+          <p class="label">Supporting · editorial / programme</p>
+          ${supporting.map((m) => `<figure>
+            <img src="${esc(m.src)}" alt="${esc(m.caption)}">
+            <figcaption>${esc(m.caption)} · ${esc(m.context)}</figcaption>
+          </figure>`).join("")}
+        </div>` : ""}
       </section>` : ""}
-      ${supporting.length ? `<section>
-        <p class="sec-k" style="margin-top:28px">Supporting media</p>
-        <div class="media-support">${supporting.map((m) => `<figure>
-          <img src="${esc(m.src)}" alt="${esc(m.caption)}">
-          <figcaption>${esc(m.caption)} · ${esc(m.context)}</figcaption>
-        </figure>`).join("")}</div>
-      </section>` : ""}
-      ${field.length ? `<section>
-        <p class="sec-k" style="margin-top:28px">Field context</p>
+      ${field.length ? `<section class="media-field">
+        <p class="label">Field context · editorial</p>
         <p class="media-note">Editorial agriculture photographs. Not verified farm evidence.</p>
-        <div class="media-support">${field.map((m) => `<figure>
+        <div class="media-strip">${field.map((m) => `<figure>
           <img src="${esc(m.src)}" alt="${esc(m.caption)}">
           <figcaption>${esc(m.caption)} · ${esc(m.context)}</figcaption>
         </figure>`).join("")}</div>
       </section>` : ""}
       ${session ? `<p class="session-link">Programme session film · <a href="${esc(session.src)}" target="_blank" rel="noopener noreferrer">${esc(session.caption)}</a></p>` : ""}
+      ${campaignDesk()}
+      ${gardenOnCamera()}
       ${mediaConnectCta()}`;
   }
 
@@ -898,6 +1233,7 @@
     else if (root === "district" && parts[1]) html = viewDistrict(parts[1]);
     else if (root === "ac" && parts[1]) html = viewAc(resolveAcId(parts[1]));
     else if (root === "teams") html = viewTeams();
+    else if (root === "zone" && parts[1]) html = viewZone(parts[1]);
     else if (root === "team" && parts[1]) html = viewTeam(parts[1]);
     else if (root === "agents") html = viewAgents(params);
     else if (root === "agent" && parts[1]) html = viewAgent(parts[1]);
@@ -910,9 +1246,12 @@
     else if (root === "reports") html = viewReports();
     else html = notFound("Page", parts.join("/"));
     app.innerHTML = html;
+    closeNav();
+    closeLang();
     const h = app.querySelector("h1");
     if (h) h.setAttribute("tabindex", "-1");
     if (h && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) h.focus({ preventScroll: true });
+    if (window.KRLMotion) window.KRLMotion.boot();
   }
 
   function openSearch() {
@@ -930,17 +1269,79 @@
       searchResults.innerHTML = `<li class="empty">No matches</li>`;
       return;
     }
-    const route = { district: "district", ac: "ac", team: "team", agent: "agent", farmer: "farmer", farm: "farm" };
+    const route = { district: "district", ac: "ac", zone: "zone", team: "team", agent: "agent", farmer: "farmer", farm: "farm" };
     searchResults.innerHTML = hits.map((h) => `<li><a href="${href(route[h.type] + "/" + h.id)}"><small>${esc(h.type)}</small>${esc(h.label)}</a></li>`).join("");
   }
 
-  document.querySelectorAll(".lang button").forEach((b) => {
-    b.addEventListener("click", () => {
-      try { localStorage.setItem("krl-lang", b.dataset.lang); } catch (_) {}
+  const langToggle = document.getElementById("lang-toggle");
+  const langMenu = document.getElementById("lang-menu");
+  const menuBtn = document.getElementById("open-menu");
+  const siteMenu = document.getElementById("site-menu");
+
+  function langOpen() {
+    return langMenu && !langMenu.hidden;
+  }
+
+  function closeLang() {
+    if (!langMenu || !langToggle) return;
+    langMenu.hidden = true;
+    langToggle.setAttribute("aria-expanded", "false");
+  }
+
+  function openLang() {
+    if (!langMenu || !langToggle) return;
+    langMenu.hidden = false;
+    langToggle.setAttribute("aria-expanded", "true");
+  }
+
+  function closeNav() {
+    document.body.classList.remove("nav-open");
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function openNav() {
+    document.body.classList.add("nav-open");
+    if (menuBtn) menuBtn.setAttribute("aria-expanded", "true");
+    closeLang();
+  }
+
+  if (langToggle) {
+    langToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (langOpen()) closeLang();
+      else openLang();
+    });
+  }
+  if (langMenu) {
+    langMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-lang]");
+      if (!btn) return;
+      try { localStorage.setItem("krl-lang", btn.dataset.lang); } catch (_) {}
+      closeLang();
+      closeNav();
       render();
     });
+  }
+  if (menuBtn) {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (document.body.classList.contains("nav-open")) closeNav();
+      else openNav();
+    });
+  }
+  if (siteMenu) {
+    siteMenu.addEventListener("click", (e) => {
+      if (e.target.closest("a")) closeNav();
+    });
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#lang-dd")) closeLang();
   });
-  document.getElementById("open-search").addEventListener("click", openSearch);
+  document.getElementById("open-search").addEventListener("click", () => {
+    closeNav();
+    closeLang();
+    openSearch();
+  });
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closeSearch(); });
   searchInput.addEventListener("input", runSearch);
   searchResults.addEventListener("click", (e) => {
@@ -951,8 +1352,13 @@
       e.preventDefault();
       openSearch();
     }
-    if (e.key === "Escape") closeSearch();
+    if (e.key === "Escape") {
+      closeSearch();
+      closeLang();
+      closeNav();
+    }
   });
+  window.addEventListener("hashchange", closeNav);
   app.addEventListener("change", (e) => {
     const form = e.target.closest("[data-filter]");
     if (!form) return;
@@ -973,6 +1379,11 @@
   app.addEventListener("click", (e) => {
     const go = e.target.closest("[data-go]");
     if (go) location.hash = go.getAttribute("data-go");
+    const jump = e.target.closest("[data-jump]");
+    if (jump) {
+      const el = document.getElementById(jump.getAttribute("data-jump"));
+      if (el) el.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    }
   });
   window.addEventListener("hashchange", render);
   applyLang();

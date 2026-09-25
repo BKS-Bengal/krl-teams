@@ -8,14 +8,14 @@
   "use strict";
 
   const STAGES = [
-    { id: "registered", label: "Registered", bn: "নিবন্ধিত" },
-    { id: "verified", label: "Verified", bn: "যাচাই" },
-    { id: "onboarded", label: "Onboarded", bn: "অন্তর্ভুক্ত" },
-    { id: "training", label: "Training", bn: "প্রশিক্ষণ" },
-    { id: "plan", label: "Smart farming plan", bn: "স্মার্ট ফার্ম পরিকল্পনা" },
-    { id: "implementation", label: "Implementation", bn: "বাস্তবায়ন" },
-    { id: "monitoring", label: "Monitoring", bn: "নিরীক্ষণ" },
-    { id: "harvest", label: "Harvest / outcome", bn: "ফসল / ফল" },
+    { id: "registered", label: "Registered", bn: "নিবন্ধিত", hi: "पंजीकृत" },
+    { id: "verified", label: "Verified", bn: "যাচাই", hi: "सत्यापित" },
+    { id: "onboarded", label: "Onboarded", bn: "অন্তর্ভুক্ত", hi: "शामिल" },
+    { id: "training", label: "Training", bn: "প্রশিক্ষণ", hi: "प्रशिक्षण" },
+    { id: "plan", label: "Smart farming plan", bn: "স্মার্ট ফার্ম পরিকল্পনা", hi: "स्मार्ट फार्म योजना" },
+    { id: "implementation", label: "Implementation", bn: "বাস্তবায়ন", hi: "कार्यान्वयन" },
+    { id: "monitoring", label: "Monitoring", bn: "নিরীক্ষণ", hi: "निगरानी" },
+    { id: "harvest", label: "Harvest / outcome", bn: "ফসল / ফল", hi: "फसल / परिणाम" },
   ];
 
   const STATUSES = [
@@ -48,8 +48,14 @@
     { id: "energy", label: "Renewable energy" },
   ];
 
+  /* Programme zones are authored only when a source names them.
+     District.zone remains agro-climatic (hills / terai / …), not this league zone. */
+  const ZONES = [
+    { id: "zone-1", name: "Zone 1" },
+  ];
+
   const TEAMS = [
-    { id: "himalayan-giants", logo: "images/teams/himalayan-giants.png", name: "Himalayan Giants", short: "HG", accent: "#3d5278", districts: ["darjeeling", "kalimpong"] },
+    { id: "himalayan-giants", logo: "images/teams/himalayan-giants.png", name: "Himalayan Giants", short: "HG", accent: "#3d5278", zoneId: "zone-1", districts: ["darjeeling", "kalimpong"] },
     { id: "terai-tuskers", logo: "images/teams/terai-tuskers.png", name: "Terai Tuskers", short: "TT", accent: "#5a4a32", districts: ["jalpaiguri", "alipurduar", "uttar-dinajpur"] },
     { id: "cooch-behar-royals", logo: "images/teams/cooch-behar-royals.png", name: "Cooch Behar Royals", short: "CR", accent: "#6b3a4a", districts: ["cooch-behar"] },
     { id: "dinajpur-defenders", logo: "images/teams/dinajpur-defenders.png", name: "Dinajpur Defenders", short: "DD", accent: "#3a5a48", districts: ["dakshin-dinajpur"] },
@@ -131,18 +137,25 @@
       gardenName: "Pikas Garden",
       districtId: "dakshin-dinajpur",
       acId: "dakshin-dinajpur-balurghat",
-      teamId: null,
-      teamSource: null,
+      teamId: "dinajpur-defenders",
+      teamSource: "geography",
       agentId: null,
       village: null,
       farmIds: ["pikas-garden"],
-      practice: null,
+      practice: "Source-evidenced on the Pika's Gardening YouTube channel: adenium, tulsi, lemon, bougainvillea, jade, lotus and water lily.",
       space: null,
       vision: null,
       story: null,
       digital: [
-        { network: "YouTube", handle: "Pika's Gardening", url: "https://www.youtube.com/@PikasGardening" },
+        { network: "YouTube", handle: "@PikasGardening", url: "https://www.youtube.com/@PikasGardening" },
         { network: "Facebook", handle: "Facebook reel", url: "https://www.facebook.com/reel/2557686798080686" },
+      ],
+      videos: [
+        { youtubeId: "UMLbq0pd43s", title: "Adenium care in monsoon", channel: "Pika's Gardening", url: "https://www.youtube.com/watch?v=UMLbq0pd43s" },
+        { youtubeId: "cBI2poDGJNM", title: "Tulsi plant care", channel: "Pika's Gardening", url: "https://www.youtube.com/watch?v=cBI2poDGJNM" },
+        { youtubeId: "vuK8-rKejIE", title: "Lemon tree fruiting", channel: "Pika's Gardening", url: "https://www.youtube.com/watch?v=vuK8-rKejIE" },
+        { youtubeId: "goHoLcUAx4M", title: "Bougainvillea care", channel: "Pika's Gardening", url: "https://www.youtube.com/watch?v=goHoLcUAx4M" },
+        { youtubeId: "3fOW4rNbKHY", title: "Lotus tuber care", channel: "Pika's Gardening", url: "https://www.youtube.com/watch?v=3fOW4rNbKHY" },
       ],
     },
     {
@@ -151,19 +164,26 @@
       role: "agri-entrepreneur",
       name: "Krishna Biswas",
       gardenName: "Rupali Garden",
-      districtId: null,
-      acId: null,
-      teamId: null,
-      teamSource: null,
+      districtId: "jalpaiguri",
+      acId: "jalpaiguri-maynaguri",
+      teamId: "himalayan-giants",
+      teamSource: "named",
       agentId: null,
       village: "Maynaguri",
       farmIds: ["rupali-garden"],
-      practice: null,
+      practice: "Source-evidenced on the Rupali Garden YouTube channel: dragon fruit (pitaya) — flowering, pruning, cuttings and fungal care.",
       space: null,
       vision: null,
       story: null,
       digital: [
-        { network: "YouTube", handle: "Rupali Garden", url: "https://www.youtube.com/@RupaliGarden" },
+        { network: "YouTube", handle: "@RupaliGarden", url: "https://www.youtube.com/@RupaliGarden" },
+      ],
+      videos: [
+        { youtubeId: "14R5zb7b_cg", title: "How to force dragon fruit to flower", channel: "Rupali Garden", url: "https://www.youtube.com/watch?v=14R5zb7b_cg" },
+        { youtubeId: "1HWKZx0efkc", title: "How to prune a dragon fruit plant", channel: "Rupali Garden", url: "https://www.youtube.com/watch?v=1HWKZx0efkc" },
+        { youtubeId: "pSN103_mtSk", title: "How to take dragon fruit cuttings", channel: "Rupali Garden", url: "https://www.youtube.com/watch?v=pSN103_mtSk" },
+        { youtubeId: "EOqHv5FaGPw", title: "Dragon fruit fungal attack", channel: "Rupali Garden", url: "https://www.youtube.com/watch?v=EOqHv5FaGPw" },
+        { youtubeId: "1TjaqpSpIvM", title: "New dragon fruit variety in first flower", channel: "Rupali Garden", url: "https://www.youtube.com/watch?v=1TjaqpSpIvM" },
       ],
     },
   ];
@@ -177,7 +197,7 @@
       districtId: "dakshin-dinajpur",
       acId: "dakshin-dinajpur-balurghat",
       village: null,
-      teamId: null,
+      teamId: "dinajpur-defenders",
       agentId: null,
       sizeAcres: null,
       crop: null,
@@ -196,9 +216,9 @@
       ],
       social: {
         public: true,
-        note: "Source references. Not treated as verified field evidence.",
+        note: "Source media from the gardener’s public channels. Not a field-verified survey.",
         channels: [
-          { network: "YouTube", handle: "Pika's Gardening", url: "https://www.youtube.com/@PikasGardening" },
+          { network: "YouTube", handle: "@PikasGardening", url: "https://www.youtube.com/@PikasGardening" },
           { network: "Facebook", handle: "Facebook reel", url: "https://www.facebook.com/reel/2557686798080686" },
         ],
       },
@@ -211,10 +231,10 @@
       name: "Rupali Garden",
       kind: "case-study",
       farmerId: "krishna-biswas",
-      districtId: null,
-      acId: null,
+      districtId: "jalpaiguri",
+      acId: "jalpaiguri-maynaguri",
       village: "Maynaguri",
-      teamId: null,
+      teamId: "himalayan-giants",
       agentId: null,
       sizeAcres: null,
       crop: null,
@@ -233,9 +253,9 @@
       ],
       social: {
         public: true,
-        note: "Source references. Not treated as verified field evidence.",
+        note: "Source media from the gardener’s public channels. Not a field-verified survey.",
         channels: [
-          { network: "YouTube", handle: "Rupali Garden", url: "https://www.youtube.com/@RupaliGarden" },
+          { network: "YouTube", handle: "@RupaliGarden", url: "https://www.youtube.com/@RupaliGarden" },
         ],
       },
       evidence: [],
@@ -260,10 +280,17 @@
     { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", width: 1280, height: 720, source: "editorial-library", subject: "irrigation", caption: "Irrigation layout", context: "Editorial field context — irrigation", category: "irrigation", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
     { id: "med-cta", type: "photo", src: "images/launch-wide.jpg", width: 1280, height: 960, source: "programme-archive", subject: "launch-hall", caption: "Launch hall", context: "KRL Media Connect", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "cta" },
     { id: "med-session", type: "video", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/archive/press-release-cover.jpg", width: null, height: null, source: "programme-archive", subject: "session-film", caption: "Session film", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "link" },
+    { id: "med-camp-league", type: "photo", src: "images/campaign/your-league.jpg", width: 1600, height: 2000, source: "campaign", subject: "league-poster", caption: "Your farm, your team, your league", context: "Campaign storyboard", category: "campaign", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "campaign" },
+    { id: "med-camp-score", type: "photo", src: "images/campaign/scoreboard.jpg", width: 1600, height: 2000, source: "campaign", subject: "scoreboard", caption: "League scoreboard language", context: "Campaign storyboard", category: "campaign", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "campaign" },
+    { id: "med-camp-field", type: "photo", src: "images/campaign/field-league.jpg", width: 1600, height: 2000, source: "campaign", subject: "field-league", caption: "The field is the farm", context: "Campaign storyboard", category: "campaign", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "campaign" },
   ];
 
   function byId(list, id) {
     return list.find((x) => x.id === id) || null;
+  }
+
+  function teamsOfZone(zoneId) {
+    return TEAMS.filter((t) => t.zoneId === zoneId);
   }
 
   function farmersOf(pred) {
@@ -358,6 +385,7 @@
       demoFarms: DEMO_BOOK.farms,
       demoAgents: DEMO_BOOK.agents,
       teams: TEAMS.length,
+      knownZones: ZONES.length,
       teamCapacity: TEAM_CAPACITY,
       agents: agents.length,
       districts: DISTRICTS.length,
@@ -378,6 +406,9 @@
     });
     acs.forEach((a) => {
       if (a.name.toLowerCase().includes(s) || a.id.includes(s)) out.push({ type: "ac", id: a.id, label: a.name });
+    });
+    ZONES.forEach((z) => {
+      if (z.name.toLowerCase().includes(s) || z.id.replace("-", " ") === s) out.push({ type: "zone", id: z.id, label: z.name });
     });
     TEAMS.forEach((t) => {
       if (t.name.toLowerCase().includes(s) || t.short.toLowerCase() === s) out.push({ type: "team", id: t.id, label: t.name });
@@ -444,6 +475,7 @@
     STATUSES,
     SCORE_AXES,
     SMART_CATS,
+    ZONES,
     TEAMS,
     DISTRICTS,
     ACS: acs,
@@ -459,6 +491,7 @@
     uniqueMedia,
     mediaOfActivity,
     byId,
+    teamsOfZone,
     farmersOf,
     farmsOfFarmer,
     countBy,

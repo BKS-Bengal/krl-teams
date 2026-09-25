@@ -10,7 +10,7 @@
   <meta property="og:title" content="KRL Teams · Smart Farming Command Centre">
   <meta property="og:description" content="West Bengal to district to assembly constituency to team to agri-entrepreneur to farm.">
   <meta property="og:image" content="images/og.jpg">
-  <link rel="stylesheet" href="command.css?v=20260925z">
+  <link rel="stylesheet" href="command.css?v=20260925ag">
 </head>
 <body>
   <a class="skip" href="#app">Skip to content</a>
@@ -25,20 +25,28 @@
     </a>
     <div class="top-tools">
       <button type="button" class="search-btn" id="open-search" data-i18n="find">Find agri-entrepreneur, farm, AC, team</button>
-      <div class="lang" role="group" aria-label="Language">
-        <button type="button" data-lang="en" aria-pressed="true">EN</button>
-        <button type="button" data-lang="bn" aria-pressed="false">বাং</button>
+      <div class="lang-dd" id="lang-dd">
+        <button type="button" class="lang-toggle" id="lang-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-menu">
+          <span id="lang-current">EN</span>
+        </button>
+        <ul class="lang-menu" id="lang-menu" hidden role="listbox" aria-label="Language">
+          <li><button type="button" data-lang="en" role="option" aria-selected="true">English</button></li>
+          <li><button type="button" data-lang="bn" role="option" aria-selected="false">বাংলা</button></li>
+          <li><button type="button" data-lang="hi" role="option" aria-selected="false">हिन्दी</button></li>
+        </ul>
       </div>
+      <button type="button" class="burger" id="open-menu" aria-expanded="false" aria-controls="site-menu">
+        <span></span><span></span><span></span>
+        <span class="sr-only" data-i18n="menu">Menu</span>
+      </button>
     </div>
   </header>
-  <nav class="subnav" aria-label="Primary">
+  <nav class="subnav" id="site-menu" aria-label="Primary">
     <a href="#/" data-nav="command" data-i18n="command">Command</a>
     <a href="#/geo" data-nav="geo" data-i18n="geography">Geography</a>
     <a href="#/teams" data-nav="teams" data-i18n="teams">Teams</a>
-    <a href="#/agents" data-nav="agents" data-i18n="agents">Agents</a>
     <a href="#/farmers" data-nav="farmers" data-i18n="farmers">Agri-entrepreneurs</a>
     <a href="#/farms" data-nav="farms" data-i18n="farms">Farms</a>
-    <a href="#/activity" data-nav="activity" data-i18n="activity">Activity</a>
     <a href="#/media" data-nav="media" data-i18n="media">Media</a>
     <a href="#/reports" data-nav="reports" data-i18n="reports">Reports</a>
   </nav>
@@ -62,7 +70,8 @@
       <ul id="search-results"></ul>
     </div>
   </div>
-  <script src="command-data.js?v=20260925z"></script>
-  <script src="command.js?v=20260925z"></script>
+  <script src="command-data.js?v=20260925ag"></script>
+  <script src="command.js?v=20260925ag"></script>
+  <script src="command-motion.js?v=20260925ag"></script>
 </body>
 </html>
