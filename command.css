@@ -124,6 +124,11 @@ button{background:none;border:0;cursor:pointer}
 .ops-line strong{display:block;font-size:20px;letter-spacing:-.02em}
 .ops-line p{margin-top:6px;font-size:14px;color:var(--mute)}
 .flag-card{padding-top:4px}
+.case-rail{display:grid;gap:28px}
+.case-card{padding-top:4px;border-top:1px solid var(--line)}
+.case-card h2{font-size:clamp(26px,3vw,38px);letter-spacing:-.03em;font-weight:600;line-height:1.05}
+.case-garden{margin:8px 0 12px;color:var(--field);font-weight:600}
+.case-card a{color:var(--field);font-weight:600}
 .media-feature figure{margin-top:10px}
 .media-feature img{width:100%;aspect-ratio:16/9;object-fit:cover}
 .media-feature figcaption,.media-support figcaption{padding:10px 0 0;font-size:13px;color:var(--mute)}

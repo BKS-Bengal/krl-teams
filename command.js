@@ -11,13 +11,13 @@
 
   const I18N = {
     en: {
-      notice: "Known records only. Programme targets are published ambitions, not live enrolment.",
-      find: "Find farmer, farm, AC, team",
+      notice: "Case-study records and published programme architecture. Not live enrolment.",
+      find: "Find agri-entrepreneur, farm, AC, team",
       command: "Command",
       geography: "Geography",
       teams: "Teams",
       agents: "Agents",
-      farmers: "Farmers",
+      farmers: "Agri-entrepreneurs",
       farms: "Farms",
       activity: "Activity",
       media: "Media",
@@ -26,13 +26,13 @@
       know_more: "Know more",
     },
     bn: {
-      notice: "কেবল যা জানা. কর্মসূচির লক্ষ্যমাত্রা প্রকাশিত উচ্চাকাঙ্ক্ষা, চালু তালিকা নয়.",
-      find: "কৃষক, খামার, কেন্দ্র, দল খুঁজুন",
+      notice: "কেস-স্টাডি রেকর্ড এবং প্রকাশিত কর্মসূচি কাঠামো. চালু তালিকা নয়.",
+      find: "উদ্যোক্তা, খামার, কেন্দ্র, দল খুঁজুন",
       command: "কমান্ড",
       geography: "ভূগোল",
       teams: "দল",
       agents: "এজেন্ট",
-      farmers: "কৃষক",
+      farmers: "উদ্যোক্তা",
       farms: "খামার",
       activity: "কাজ",
       media: "মিডিয়া",
@@ -86,8 +86,13 @@
   }
 
   function nameOf(type, id) {
+    if (!id) return "";
     if (type === "district") return (D.byId(D.DISTRICTS, id) || {}).name || id;
-    if (type === "ac") return (D.byId(D.ACS, id) || {}).name || id;
+    if (type === "ac") {
+      const ac = D.byId(D.ACS, id);
+      if (!ac) return id;
+      return ac.officialNo ? ac.officialNo + " – " + ac.name : ac.name;
+    }
     if (type === "team") return (D.byId(D.TEAMS, id) || {}).name || id;
     if (type === "agent") return (D.byId(D.AGENTS, id) || {}).code || id;
     if (type === "farmer") return (D.byId(D.FARMERS, id) || {}).name || id;
@@ -139,6 +144,14 @@
     return ((farm.social && farm.social.channels) || []).filter((c) => c.url);
   }
 
+  function digitalLinks(person) {
+    return (person && person.digital || []).filter((c) => c.url);
+  }
+
+  function dash(v) {
+    return v == null || v === "" ? "—" : v;
+  }
+
   function smartRows(farm) {
     if (!farm.smart) return [];
     return D.SMART_CATS.filter((c) => {
@@ -155,7 +168,7 @@
     const tabs = [["overview", "Overview"]];
     if (hasAuthoredJourney(farm)) tabs.push(["journey", "Farm journey"]);
     if (smartRows(farm).length) tabs.push(["smart", "Smart farming"]);
-    if (farm.lastVisit || (farm.plots && farm.plots.length)) tabs.push(["monitor", "Monitoring"]);
+    if (farm.lastVisit || ((farm.plots || []).length)) tabs.push(["monitor", "Monitoring"]);
     if ((farm.evidence || []).length) tabs.push(["media", "Media"]);
     if (supportPeople(farm).length) tabs.push(["people", "People and support"]);
     if (socialChannels(farm).length) tabs.push(["social", "Social presence"]);
@@ -263,12 +276,20 @@
     setNav("command");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
     const s = D.programmeStats();
-    const latest = D.ACTIVITIES[0];
-    const latestFarm = latest ? D.byId(D.FARMS, latest.farmId) : null;
-    const latestAgent = latest ? D.byId(D.AGENTS, latest.agentId) : null;
-    const flag = D.byId(D.FARMS, "maa-ganga");
-    const flagTeam = flag ? D.byId(D.TEAMS, flag.teamId) : null;
-    const flagFarmer = flag ? D.byId(D.FARMERS, flag.farmerId) : null;
+    const cases = D.FARMERS.filter((f) => f.kind === "case-study");
+    const caseCards = cases.map((person, i) => {
+      const farm = D.byId(D.FARMS, person.farmIds[0]);
+      const team = person.teamId ? D.byId(D.TEAMS, person.teamId) : null;
+      const place = [nameOf("district", person.districtId), nameOf("ac", person.acId)].filter(Boolean).join(" · ");
+      return `<article class="case-card">
+        <p class="geo-kicker">${i === 0 ? "Flagship case study" : "Case study"}</p>
+        <h2>${esc(person.name)}</h2>
+        <p class="case-garden">${esc(person.gardenName || (farm && farm.name) || "")}</p>
+        ${team ? teamIdentity(team, place || teamRegion(team)) : (place ? `<p class="mast-sub">${esc(place)}</p>` : "")}
+        ${!team && !place ? `<p class="mast-sub">Geography not yet recorded.</p>` : ""}
+        <p><a href="${href("farmer/" + person.id)}">Open profile</a>${farm ? ` · <a href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}</p>
+      </article>`;
+    }).join("");
 
     return `
       <header class="mast">
@@ -276,19 +297,19 @@
           <p class="mast-k">Krishi Ratna League · Bharatiya Krishak Samaj</p>
           <h1>Smart Farming<br>Command Centre</h1>
           <p class="mast-place">West Bengal</p>
-          <p class="mast-sub">State to constituency to team to agent to farmer to farm.</p>
+          <p class="mast-sub">State to constituency to team to agri-entrepreneur to farm.</p>
         </div>
         <div class="mast-aside">
           <div><strong>Programme target</strong> ${s.targetFarmers.toLocaleString("en-IN")} farmers</div>
           <div><strong>State frame</strong> ${s.districts} districts · ${s.acs} assembly constituencies</div>
-          <div><strong>Known records</strong> ${s.knownFarmers} farmer · ${s.knownFarms} farm · ${s.agents} agent</div>
+          <div><strong>Demo book</strong> ${s.demoFarmers} farmers · ${s.demoFarms} farms · ${s.demoAgents} agents</div>
         </div>
       </header>
       <dl class="scale">
-        <a href="${href("farmers")}"><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd><small>Published ambition</small></a>
+        <a href="${href("farmers")}"><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd><small>Published ambition, not enrolment</small></a>
         <a href="${href("geo")}"><dt>Assembly seats</dt><dd>${s.acs}</dd><small>${s.districts} districts</small></a>
         <a href="${href("teams")}"><dt>Official teams</dt><dd>${s.teams}</dd><small>Current league identities</small></a>
-        <a href="${href("farms")}"><dt>Known farms</dt><dd>${s.knownFarms}</dd><small>${s.knownFarmers} farmer · ${s.agents} agent</small></a>
+        <a href="${href("farmers")}"><dt>Case studies</dt><dd>${s.caseStudies}</dd><small>Named agri-entrepreneurs</small></a>
       </dl>
       <section class="geo-command">
         <div>
@@ -296,24 +317,8 @@
           <h2 class="sec-title" style="margin-top:0">West Bengal</h2>
           ${wbMap(false)}
         </div>
-        ${flag ? `<aside class="flag-card">
-          <p class="geo-kicker">Flagship record</p>
-          <h2 class="sec-title" style="margin-top:0">${esc(flag.name)}</h2>
-          ${teamIdentity(flagTeam, "Jalpaiguri · Maynaguri")}
-          <p class="mast-sub">${flag.progress}% implementation. ${esc(flagFarmer.name)} · ${esc(latestAgent ? latestAgent.code : flag.agentId)}.</p>
-          <p><a href="${href("farm/maa-ganga")}">Open Farm 360</a></p>
-        </aside>` : ""}
+        <div class="case-rail">${caseCards}</div>
       </section>
-      ${latest ? `<section class="ops-now">
-        <header class="sec-head"><p class="sec-k">Field journal</p><h2>Current activity</h2></header>
-        <a class="ops-line" href="${href("farm/" + latest.farmId)}">
-          <time>${esc(latest.date)}</time>
-          <div>
-            <strong>${esc(latest.title)}</strong>
-            <p>${esc(latestFarm ? latestFarm.name : "")} · ${esc(latestAgent ? latestAgent.code : "")}${latest.note ? " · " + esc(latest.note) : ""}</p>
-          </div>
-        </a>
-      </section>` : ""}
       ${leagueBoard()}`;
   }
 
@@ -405,11 +410,11 @@
     const people = D.FARMERS.filter((f) => f.acId === id);
     const rows = people.slice(0, 40).map((f) => {
       const farm = D.byId(D.FARMS, f.farmIds[0]);
-      return `<tr><td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td><td><a href="${href("farm/" + (farm ? farm.id : ""))}">${esc(farm ? farm.name : "—")}</a></td><td>${esc(stageLabel(f.stage))}</td><td>${f.progress}%</td></tr>`;
+      return `<tr><td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td><td><a href="${href("farm/" + (farm ? farm.id : ""))}">${esc(farm ? farm.name : "—")}</a></td><td>${f.kind === "case-study" ? "Case study" : esc(stageLabel(f.stage))}</td><td></td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Assembly constituency</p>
-      <h1>${esc(ac.name)}</h1>
+      <h1>${esc(ac.officialNo ? ac.officialNo + " – " + ac.name : ac.name)}</h1>
       ${teamIdentity(team)}
       <p>${esc(d.name)} · target ${D.META.targetPerAc} farms at full book</p>
     </div></section>
@@ -489,11 +494,11 @@
     return `<section class="ident"><div>
       <p class="mast-k">Field roster</p>
       <h1>Agents</h1>
-      <p>${list.length} ${list.length === 1 ? "known agent" : "known agents"}.</p>
+      <p>Approved demo-book volume is ${D.DEMO_BOOK.agents} agents. Named agent records appear only when authored.</p>
     </div></section>
-      ${filtersBar(params)}
+      ${list.length ? `${filtersBar(params)}
       <div class="table-wrap"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Team</th><th>Farmers</th><th>Farms</th></tr></thead><tbody>${rows}</tbody></table></div>
-      ${pager("agents", slice, params)}`;
+      ${pager("agents", slice, params)}` : ""}`;
   }
 
   function viewAgent(id) {
@@ -531,76 +536,66 @@
 
   function viewFarmers(params) {
     setNav("farmers");
-    crumb([{ href: "#/", label: "West Bengal" }, { label: "Farmers" }]);
-    let list = D.filterFarms(params).reduce((acc, farm) => {
-      if (!acc.find((f) => f.id === farm.farmerId)) acc.push(D.byId(D.FARMERS, farm.farmerId));
-      return acc;
-    }, []);
+    crumb([{ href: "#/", label: "West Bengal" }, { label: "Agri-entrepreneurs" }]);
+    let list = D.FARMERS.slice();
     if (params.q) {
       const q = params.q.toLowerCase();
-      list = D.FARMERS.filter((f) => f.name.toLowerCase().includes(q) || f.code.toLowerCase().includes(q) || f.village.toLowerCase().includes(q));
+      list = list.filter((f) => [f.name, f.gardenName, f.id].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
     if (params.team) list = list.filter((f) => f.teamId === params.team);
     if (params.district) list = list.filter((f) => f.districtId === params.district);
-    if (params.stage) list = list.filter((f) => f.stage === params.stage);
     const slice = pageSlice(list, params.page);
     const rows = slice.rows.map((f) => `<tr>
       <td><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></td>
-      <td>${esc(f.code)}</td>
-      <td>${esc(f.village)}</td>
-      <td><a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a></td>
-      <td><a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a></td>
+      <td><a href="${href("farm/" + f.farmIds[0])}">${esc(f.gardenName || "—")}</a></td>
+      <td>${f.districtId ? `<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>` : "—"}</td>
+      <td>${f.acId ? `<a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a>` : "—"}</td>
+      <td>${f.teamId ? `<a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a>` : "—"}</td>
       <td>${f.farmIds.length}</td>
-      <td>${esc(stageLabel(f.stage))}</td>
     </tr>`).join("");
     return `<section class="ident"><div>
       <p class="mast-k">People</p>
-      <h1>Farmers</h1>
-      <p>${list.length} ${list.length === 1 ? "known farmer" : "known farmers"}. A farmer may hold more than one farm.</p>
+      <h1>Agri-entrepreneurs</h1>
+      <p>${list.length} named ${list.length === 1 ? "case study" : "case studies"}. A person may hold more than one farm or garden.</p>
     </div></section>
       ${filtersBar(params)}
-      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farmer</th><th>ID</th><th>Village</th><th>District</th><th>Team</th><th>Farms</th><th>Stage</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farmers", slice, params)}` : empty("No farmers match", "Change filters or clear search.")}`;
+      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Agri-entrepreneur</th><th>Farm / garden</th><th>District</th><th>Assembly seat</th><th>Team</th><th>Holdings</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farmers", slice, params)}` : ""}`;
   }
 
   function viewFarmer(id) {
     setNav("farmers");
     const f = D.byId(D.FARMERS, id);
-    if (!f) return notFound("Farmer", id);
-    const team = D.byId(D.TEAMS, f.teamId);
-    const agent = D.byId(D.AGENTS, f.agentId);
-    crumb([
-      { href: "#/", label: "West Bengal" },
-      { href: href("district/" + f.districtId), label: nameOf("district", f.districtId) },
-      { href: href("ac/" + f.acId), label: nameOf("ac", f.acId) },
-      { label: f.name },
-    ]);
+    if (!f) return notFound("Agri-entrepreneur", id);
+    const team = f.teamId ? D.byId(D.TEAMS, f.teamId) : null;
+    const crumbs = [{ href: "#/", label: "West Bengal" }];
+    if (f.districtId) crumbs.push({ href: href("district/" + f.districtId), label: nameOf("district", f.districtId) });
+    if (f.acId) crumbs.push({ href: href("ac/" + f.acId), label: nameOf("ac", f.acId) });
+    crumbs.push({ label: f.name });
+    crumb(crumbs);
     const farmRows = f.farmIds.map((fid) => {
       const farm = D.byId(D.FARMS, fid);
-      return `<a class="reg-row" href="${href("farm/" + fid)}"><b>${esc(farm.name)}</b><span>${farm.sizeAcres} acres · ${esc(farm.crop)}</span><em>${esc(stageLabel(farm.stage))}</em><em>${farm.progress}%</em></a>`;
+      if (!farm) return "";
+      const meta = [farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ");
+      return `<a class="reg-row" href="${href("farm/" + fid)}"><b>${esc(farm.name)}</b><span>${esc(meta || "Garden / farm record")}</span><em></em><em></em></a>`;
     }).join("");
-    return `<section class="ident ident-row">${teamMark(team)}<div>
-      <p class="mast-k">Farmer</p>
+    const digital = digitalLinks(f).map((c) => `<a class="ops-line" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer"><time>${esc(c.network)}</time><div><strong>${esc(c.handle)}</strong></div></a>`).join("");
+    return `<section class="ident${team ? " ident-row" : ""}">${team ? teamMark(team) : ""}<div>
+      <p class="mast-k">Agri-entrepreneur</p>
       <h1>${esc(f.name)}</h1>
-      <p>${esc(f.code)} · ${esc(f.village)} · no phone, identity number or private contact is shown</p>
+      <p>${esc(f.gardenName || "")}${f.kind === "case-study" ? " · Case study" : ""}</p>
     </div></section>
-    <dl class="ledger">
-      <div><dt>District</dt><dd style="font-size:16px"><a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a></dd></div>
-      <div><dt>Assembly seat</dt><dd style="font-size:16px"><a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a></dd></div>
-      <div><dt>Team</dt><dd style="font-size:16px"><a href="${href("team/" + f.teamId)}">${esc(team.name)}</a></dd></div>
-      <div><dt>Agent</dt><dd style="font-size:16px"><a href="${href("agent/" + f.agentId)}">${esc(agent.code)}</a></dd></div>
-      <div><dt>Stage</dt><dd style="font-size:16px">${esc(stageLabel(f.stage))}</dd></div>
-      <div><dt>Farms</dt><dd>${f.farmIds.length}</dd></div>
-    </dl>
     <ol class="spine">
-      ${f.voice ? `<li><h3>Voice</h3><p>${esc(f.voice)}</p></li>` : ""}
-      ${f.goal && f.goal !== "Complete onboarding and first training." ? `<li><h3>Why</h3><p>${esc(f.goal)}</p></li>` : ""}
-      ${f.challenge && f.challenge !== "Awaiting verification visit." ? `<li><h3>Constraint</h3><p>${esc(f.challenge)}</p></li>` : ""}
-      ${f.achievement ? `<li><h3>Recorded so far</h3><p>${esc(f.achievement)}</p></li>` : ""}
+      <li><h3>Who</h3><p>${esc(f.name)}</p></li>
+      <li><h3>Farm / garden</h3><p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")}</p></li>
+      ${f.districtId || f.acId ? `<li><h3>Where</h3><p>${f.districtId ? `<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>` : ""}${f.acId ? ` · <a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a>` : ""} · West Bengal</p></li>` : ""}
+      ${team ? `<li><h3>Programme connection</h3><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${f.teamSource === "district-mapping" ? " · from district geography, not a claimed enrolment record" : ""}</p></li>` : ""}
     </ol>
+    ${digital ? `<section><h2 class="sec-title">Digital presence</h2>${digital}</section>` : ""}
     <section class="register">
-      <h2 class="sec-title">Farms</h2>
+      <h2 class="sec-title">Farms / gardens</h2>
       ${farmRows}
-    </section>`;
+    </section>
+    ${f.farmIds[0] ? `<p class="session-link"><a href="${href("farm/" + f.farmIds[0])}">Open Farm 360</a></p>` : ""}`;
   }
 
   function viewFarms(params) {
@@ -615,18 +610,16 @@
     const rows = slice.rows.map((f) => `<tr>
       <td><a href="${href("farm/" + f.id)}">${esc(f.name)}</a></td>
       <td><a href="${href("farmer/" + f.farmerId)}">${esc(nameOf("farmer", f.farmerId))}</a></td>
-      <td>${esc(nameOf("district", f.districtId))}</td>
-      <td><a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a></td>
-      <td>${esc(stageLabel(f.stage))}</td>
-      <td>${f.progress}%</td>
+      <td>${f.districtId ? esc(nameOf("district", f.districtId)) : "—"}</td>
+      <td>${f.teamId ? `<a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a>` : "—"}</td>
     </tr>`).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Holdings</p>
-      <h1>Farms</h1>
-      <p>${list.length} ${list.length === 1 ? "known farm" : "known farms"}. Distinct from the farmer who holds them.</p>
+      <h1>Farms / gardens</h1>
+      <p>${list.length} named ${list.length === 1 ? "holding" : "holdings"}. Distinct from the agri-entrepreneur who holds them.</p>
     </div></section>
       ${filtersBar(params)}
-      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farm</th><th>Farmer</th><th>District</th><th>Team</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farms", slice, params)}` : empty("No farms match", "Change filters or clear search.")}`;
+      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farm / garden</th><th>Agri-entrepreneur</th><th>District</th><th>Team</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farms", slice, params)}` : ""}`;
   }
 
   function farmTabs(farm, tab) {
@@ -638,34 +631,31 @@
 
   function farmHeader(farm) {
     const farmer = D.byId(D.FARMERS, farm.farmerId);
-    const team = D.byId(D.TEAMS, farm.teamId);
-    const agent = D.byId(D.AGENTS, farm.agentId);
-    crumb([
-      { href: "#/", label: "West Bengal" },
-      { href: href("district/" + farm.districtId), label: nameOf("district", farm.districtId) },
-      { href: href("ac/" + farm.acId), label: nameOf("ac", farm.acId) },
-      { href: href("farmer/" + farm.farmerId), label: farmer.name },
-      { label: farm.name },
-    ]);
+    const team = farm.teamId ? D.byId(D.TEAMS, farm.teamId) : null;
+    const crumbs = [{ href: "#/", label: "West Bengal" }];
+    if (farm.districtId) crumbs.push({ href: href("district/" + farm.districtId), label: nameOf("district", farm.districtId) });
+    if (farm.acId) crumbs.push({ href: href("ac/" + farm.acId), label: nameOf("ac", farm.acId) });
+    crumbs.push({ href: href("farmer/" + farm.farmerId), label: farmer.name });
+    crumbs.push({ label: farm.name });
+    crumb(crumbs);
     const visual = farm.contextualMediaId ? D.mediaById(farm.contextualMediaId) : null;
+    const place = [nameOf("district", farm.districtId), nameOf("ac", farm.acId)].filter(Boolean).join(" · ");
     return `<section class="dossier${visual ? "" : " dossier-plain"}">
       ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : ""}
       <div>
-        <p class="dossier-k">${farm.id === "maa-ganga" ? "Farm 360 · Flagship record" : "Farm 360"}</p>
+        <p class="dossier-k">${farm.kind === "case-study" ? "Farm 360 · Case study" : "Farm 360"}</p>
         <h1>${esc(farm.name)}</h1>
-        <p class="dossier-place">${esc(nameOf("district", farm.districtId))} · ${esc(nameOf("ac", farm.acId))}</p>
+        ${place ? `<p class="dossier-place">${esc(place)}</p>` : ""}
         ${teamIdentity(team)}
         <dl class="dossier-meta">
           <div><dt>Who</dt><dd><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></dd></div>
-          <div><dt>Where</dt><dd>${esc(farm.village)}</dd></div>
-          <div><dt>What</dt><dd>${farm.sizeAcres} acres · ${esc(farm.crop)}</dd></div>
-          <div><dt>Agent</dt><dd><a href="${href("agent/" + agent.id)}">${esc(agent.code)}</a></dd></div>
+          ${place ? `<div><dt>Where</dt><dd>${esc(place)}</dd></div>` : ""}
+          ${farm.sizeAcres != null || farm.crop ? `<div><dt>What</dt><dd>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</dd></div>` : ""}
         </dl>
       </div>
       <div class="dossier-prog">
         ${team && team.logo ? `<img class="dossier-crest" src="${esc(team.logo)}" alt="${esc(team.name)} official mark">` : ""}
-        <b>${farm.progress}</b>
-        <span>${esc(stageLabel(farm.stage))}<br>Path share, not yield</span>
+        ${typeof farm.progress === "number" ? `<b>${farm.progress}</b><span>${esc(stageLabel(farm.stage))}<br>Path share, not yield</span>` : `<span>Case-study holding<br>No invented progress</span>`}
       </div>
     </section>`;
   }
@@ -675,7 +665,7 @@
     const farm = D.byId(D.FARMS, id);
     if (!farm) return notFound("Farm", id);
     const farmer = D.byId(D.FARMERS, farm.farmerId);
-    const agent = D.byId(D.AGENTS, farm.agentId);
+    const agent = farm.agentId ? D.byId(D.AGENTS, farm.agentId) : null;
     const allowed = farmAvailableTabs(farm).map((x) => x[0]);
     const current = allowed.includes(tab) ? tab : "overview";
     const head = farmHeader(farm) + farmTabs(farm, current);
@@ -683,7 +673,7 @@
     if (current === "journey") {
       const items = (farm.journey || []).filter((j) => j.date).map((j) => `<li data-status="${esc(j.status)}">
         <time>${esc(j.date)}</time><i></i>
-        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)} · ${esc(agent.code)}</p></div>
+        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)}${agent ? " · " + esc(agent.code) : ""}</p></div>
       </li>`).join("");
       return head + `<ol class="journey">${items}</ol>`;
     }
@@ -692,7 +682,7 @@
       const cards = smartRows(farm).map((row) => `<article>
           <h3>${esc(row.cat.label)}</h3>
           <div class="progress"><span class="bar" aria-hidden="true"><i style="width:${row.pct}%"></i></span><strong>${row.pct}%</strong></div>
-          <p>${statusBadge(row.status)}${row.updated ? " · " + esc(row.updated) : ""} · ${esc(agent.code)}</p>
+          <p>${statusBadge(row.status)}${row.updated ? " · " + esc(row.updated) : ""}</p>
           <p>${esc(row.note)}</p>
         </article>`).join("");
       return head + `<div class="smart">${cards}</div>`;
@@ -703,7 +693,7 @@
       return head + `<dl class="ledger">
         <div><dt>Current stage</dt><dd style="font-size:16px">${esc(stageLabel(farm.stage))}</dd></div>
         ${farm.lastVisit ? `<div><dt>Last visit</dt><dd style="font-size:16px">${esc(farm.lastVisit)}</dd></div>` : ""}
-        <div><dt>Agent</dt><dd style="font-size:16px">${esc(agent.code)}</dd></div>
+        ${agent ? `<div><dt>Agent</dt><dd style="font-size:16px">${esc(agent.code)}</dd></div>` : ""}
         ${latest ? `<div><dt>Latest activity</dt><dd style="font-size:16px">${esc(latest.title)}</dd></div>` : ""}
         <div><dt>Plots</dt><dd>${farm.plots.length}</dd></div>
       </dl>
@@ -749,24 +739,20 @@
       return head + `<p>${esc((farm.social && farm.social.note) || "")}</p><div class="people" style="margin-top:14px">${rows}</div>`;
     }
 
-    const latest = D.ACTIVITIES.find((a) => a.farmId === farm.id);
-    const plan = farm.id === "maa-ganga"
-      ? "Integrated crop management with monitored irrigation, soil practices and seasonal field activities."
-      : "";
-    const why = farmer.challenge && farmer.challenge !== "Awaiting verification visit." ? farmer.challenge : "";
+    const where = [...new Set([nameOf("district", farm.districtId), nameOf("ac", farm.acId), farm.village].filter(Boolean))];
     return head + `<div class="narrative">
       <ol class="spine">
-        <li><h3>Who</h3><p><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a> · ${esc(farmer.code)}</p></li>
-        <li><h3>Where</h3><p>${esc([...new Set([nameOf("district", farm.districtId), nameOf("ac", farm.acId), farm.village])].join(" · "))}</p></li>
-        ${why ? `<li><h3>Why</h3><p>${esc(why)}</p></li>` : ""}
-        <li><h3>What</h3><p>${farm.sizeAcres} acres · ${esc(farm.crop)}</p></li>
-        ${plan ? `<li><h3>How</h3><p>${esc(plan)}</p></li>` : ""}
-        <li><h3>Progress</h3><p>${farm.progress}% · ${esc(stageLabel(farm.stage))}${farmer.achievement ? ". " + esc(farmer.achievement) : ""}</p></li>
-        <li><h3>People</h3><p><a href="${href("agent/" + agent.id)}">${esc(agent.code)}</a> · <a href="${href("team/" + farm.teamId)}">${esc(nameOf("team", farm.teamId))}</a>${allowed.includes("people") ? ` · <a href="${href("farm/" + farm.id + "/people")}">Support network</a>` : ""}</p></li>
+        <li><h3>Who</h3><p><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></p></li>
+        ${where.length ? `<li><h3>Where</h3><p>${esc(where.join(" · "))}</p></li>` : ""}
+        <li><h3>Farm / garden</h3><p>${esc(farm.name)}</p></li>
+        ${farm.sizeAcres != null || farm.crop ? `<li><h3>What</h3><p>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</p></li>` : ""}
+        ${farm.teamId ? `<li><h3>Team</h3><p><a href="${href("team/" + farm.teamId)}">${esc(nameOf("team", farm.teamId))}</a></p></li>` : ""}
+        ${allowed.includes("people") ? `<li><h3>People</h3><p><a href="${href("farm/" + farm.id + "/people")}">Support network</a></p></li>` : ""}
+        ${allowed.includes("social") ? `<li><h3>Digital presence</h3><p><a href="${href("farm/" + farm.id + "/social")}">Source channels</a></p></li>` : ""}
       </ol>
       <aside>
-        ${latest ? `<h2 class="sec-title">Now on the farm</h2><p class="now">${esc(latest.title)} · ${esc(latest.date)}${latest.note ? ". " + esc(latest.note) : ""}</p>` : ""}
-        ${farmer.voice ? `<blockquote class="voice">${esc(farmer.voice)}</blockquote>` : ""}
+        <h2 class="sec-title">Record standing</h2>
+        <p class="now">${farm.kind === "case-study" ? "Case-study holding. Crop, size and operational history are shown only when known." : ""}</p>
       </aside>
     </div>`;
   }
@@ -793,10 +779,9 @@
     return `<section class="ident"><div>
       <p class="mast-k">Field book</p>
       <h1>Activity</h1>
-      <p>${list.length} ${list.length === 1 ? "recorded activity" : "recorded activities"}.</p>
+      <p>Field activities appear only when a record exists. None are authored in this book.</p>
     </div></section>
-      ${filtersBar(params)}
-      ${rows ? `<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
+      ${rows ? `${filtersBar(params)}<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
       ${pager("activity", slice, params)}`;
   }
 
@@ -850,14 +835,14 @@
     return `<section class="ident"><div>
       <p class="mast-k">Operations</p>
       <h1>Reports</h1>
-      <p>Known records and published programme targets. Not a published league table.</p>
+      <p>Published architecture and named case studies. Not live enrolment.</p>
     </div></section>
       <dl class="ledger">
-        <div><dt>Known farmers</dt><dd>${s.knownFarmers}</dd></div>
-        <div><dt>Known farms</dt><dd>${s.knownFarms}</dd></div>
-        <div><dt>Known agents</dt><dd>${s.agents}</dd></div>
+        <div><dt>Case studies</dt><dd>${s.caseStudies}</dd></div>
+        <div><dt>Demo farmers</dt><dd>${s.demoFarmers}</dd></div>
+        <div><dt>Demo farms</dt><dd>${s.demoFarms}</dd></div>
+        <div><dt>Demo agents</dt><dd>${s.demoAgents}</dd></div>
         <div><dt>Official teams</dt><dd>${s.teams}</dd></div>
-        <div><dt>ACs in frame</dt><dd>${s.acs}</dd></div>
         <div><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd></div>
       </dl>
       <div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Team</th><th>Farmers</th><th>Farms</th><th>ACs</th><th>Agents</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
@@ -888,8 +873,8 @@
     else if (root === "team" && parts[1]) html = viewTeam(parts[1]);
     else if (root === "agents") html = viewAgents(params);
     else if (root === "agent" && parts[1]) html = viewAgent(parts[1]);
-    else if (root === "farmers") html = viewFarmers(params);
-    else if (root === "farmer" && parts[1]) html = viewFarmer(parts[1]);
+    else if (root === "farmers" || root === "entrepreneurs") html = viewFarmers(params);
+    else if ((root === "farmer" || root === "entrepreneur") && parts[1]) html = viewFarmer(parts[1]);
     else if (root === "farms") html = viewFarms(params);
     else if (root === "farm" && parts[1]) html = viewFarm(parts[1], resolveFarmTab(parts[2]));
     else if (root === "activity") html = viewActivity(params);

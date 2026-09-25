@@ -133,125 +133,140 @@
   const acs = [];
   DISTRICTS.forEach((d) => {
     d.acs.forEach((name, i) => {
-      acs.push({
+      const row = {
         id: d.id + "-" + slug(name),
         name,
         districtId: d.id,
         teamId: teamByDistrict[d.id] || "sundarban-strikers",
         index: i + 1,
-      });
+      };
+      if (d.id === "dakshin-dinajpur" && name === "Balurghat") row.officialNo = 39;
+      acs.push(row);
     });
   });
 
   const TARGET_FARMS = 5000;
   const TARGET_PER_AC = 20;
+  const DEMO_BOOK = { farmers: 360, farms: 413, agents: 120 };
   const CROPS = ["Paddy", "Vegetables", "Mustard", "Jute", "Integrated pond", "Banana", "Pulses"];
 
-  const agents = [
-    {
-      id: "ag-024",
-      code: "AG-024",
-      name: "Agent 024",
-      teamId: "terai-tuskers",
-      districtId: "jalpaiguri",
-    },
-  ];
+  const agents = [];
 
   const farmers = [
     {
-      id: "farmer-014",
-      code: "F-014",
-      name: "Farmer 014",
-      village: "Maynaguri",
-      districtId: "jalpaiguri",
-      acId: "jalpaiguri-maynaguri",
-      teamId: "terai-tuskers",
-      agentId: "ag-024",
-      stage: "implementation",
-      progress: 68,
-      farmIds: ["maa-ganga"],
-      voice: "I want the pond and the vegetable beds to work together this season. Water is the first problem.",
-      goal: "Stabilise irrigation before the next paddy cycle.",
-      challenge: "Uneven water in the west plot.",
-      achievement: "Baseline walk and drip layout marked.",
+      id: "amit-shill",
+      kind: "case-study",
+      role: "agri-entrepreneur",
+      name: "Amit Shill",
+      gardenName: "Pikas Garden",
+      districtId: "dakshin-dinajpur",
+      acId: "dakshin-dinajpur-balurghat",
+      teamId: "dinajpur-defenders",
+      teamSource: "district-mapping",
+      agentId: null,
+      village: null,
+      farmIds: ["pikas-garden"],
+      digital: [
+        { network: "YouTube", handle: "Pika's Gardening", url: "https://www.youtube.com/@PikasGardening" },
+        { network: "Facebook", handle: "Facebook reel", url: "https://www.facebook.com/reel/2557686798080686" },
+      ],
+    },
+    {
+      id: "krishna-biswas",
+      kind: "case-study",
+      role: "agri-entrepreneur",
+      name: "Krishna Biswas",
+      gardenName: "Rupali Garden",
+      districtId: null,
+      acId: null,
+      teamId: null,
+      teamSource: null,
+      agentId: null,
+      village: null,
+      farmIds: ["rupali-garden"],
+      digital: [
+        { network: "YouTube", handle: "Rupali Garden", url: "https://www.youtube.com/@RupaliGarden" },
+      ],
     },
   ];
 
   const farms = [
     {
-      id: "maa-ganga",
-      name: "Maa Ganga Smart Farm",
-      farmerId: "farmer-014",
-      districtId: "jalpaiguri",
-      acId: "jalpaiguri-maynaguri",
-      village: "Maynaguri",
-      teamId: "terai-tuskers",
-      agentId: "ag-024",
-      sizeAcres: 2.4,
-      crop: "Integrated pond and vegetables",
-      stage: "implementation",
-      progress: 68,
-      status: "in_progress",
-      lastVisit: "2026-09-24",
+      id: "pikas-garden",
+      name: "Pikas Garden",
+      kind: "case-study",
+      farmerId: "amit-shill",
+      districtId: "dakshin-dinajpur",
+      acId: "dakshin-dinajpur-balurghat",
+      village: null,
+      teamId: "dinajpur-defenders",
+      agentId: null,
+      sizeAcres: null,
+      crop: null,
+      stage: null,
+      progress: null,
+      status: null,
+      lastVisit: null,
       alerts: [],
-      contextualMediaId: "med-irrigation",
-      plots: [
-        { id: "plot-a", name: "West plot", size: "1.1 acres", crop: "Vegetables" },
-        { id: "plot-b", name: "East plot", size: "0.8 acres", crop: "Paddy nursery" },
-        { id: "plot-c", name: "Pond edge", size: "0.5 acres", crop: "Aquaculture" },
-      ],
-      smart: {
-        crop: { status: "in_progress", pct: 70, updated: "2026-09-22", note: "Vegetable beds laid. Paddy nursery started." },
-        irrigation: { status: "in_progress", pct: 80, updated: "2026-09-24", note: "Drip laterals marked. Main line pending." },
-        soil: { status: "completed", pct: 100, updated: "2026-09-18", note: "Baseline walk completed with agent AG-024." },
-        water: { status: "in_progress", pct: 40, updated: "2026-09-23", note: "West plot dries faster than the pond edge." },
-        organic: { status: "planned", pct: 25, updated: "2026-09-20", note: "Compost bay sited. Not built." },
-        machinery: { status: "not_started", pct: 0, updated: null, note: "No machinery claim on this record." },
-        weather: { status: "planned", pct: 15, updated: "2026-09-21", note: "Phone weather watch only." },
-        pest: { status: "not_started", pct: 0, updated: null, note: "Not claimed." },
-        waste: { status: "planned", pct: 20, updated: "2026-09-19", note: "Pond silt reuse discussed." },
-        livestock: { status: "not_started", pct: 0, updated: null, note: "Not part of this farm cycle." },
-        aqua: { status: "in_progress", pct: 55, updated: "2026-09-22", note: "Pond held. Stocking not recorded." },
-        energy: { status: "not_started", pct: 0, updated: null, note: "No solar claim on this record." },
-      },
-      journey: [
-        { id: "j1", title: "Farmer registered", date: "2026-09-14", status: "completed", agentId: "ag-024", note: "Registration after the Media Connect launch." },
-        { id: "j2", title: "Farm verified", date: "2026-09-16", status: "completed", agentId: "ag-024", note: "Boundary walk. Two plots and a pond edge recorded." },
-        { id: "j3", title: "Baseline assessment", date: "2026-09-18", status: "completed", agentId: "ag-024", note: "Soil and water notes. West plot flagged." },
-        { id: "j4", title: "Training", date: "2026-09-20", status: "completed", agentId: "ag-024", note: "First cluster session. Irrigation layout." },
-        { id: "j5", title: "Smart farming plan", date: "2026-09-21", status: "completed", agentId: "ag-024", note: "Plan drafted. Awaiting technical review." },
-        { id: "j6", title: "Implementation started", date: "2026-09-22", status: "in_progress", agentId: "ag-024", note: "Drip layout and vegetable beds." },
-        { id: "j7", title: "Crop cycle", date: "2026-09-23", status: "in_progress", agentId: "ag-024", note: "Nursery and pond held." },
-      ],
+      contextualMediaId: null,
+      plots: [],
+      smart: null,
+      journey: [],
       support: [
-        { role: "Farmer", name: "Farmer 014", id: "farmer-014" },
-        { role: "Agent", name: "Agent 024", id: "ag-024" },
-        { role: "Team", name: "Terai Tuskers", id: "terai-tuskers" },
+        { role: "Agri-entrepreneur", name: "Amit Shill", id: "amit-shill" },
+        { role: "Team", name: "Dinajpur Defenders", id: "dinajpur-defenders" },
         { role: "Organisation", name: "Bharatiya Krishak Samaj West Bengal", id: null },
       ],
-      social: { public: false, note: "", channels: [] },
+      social: {
+        public: true,
+        note: "Source references. Not treated as verified field evidence.",
+        channels: [
+          { network: "YouTube", handle: "Pika's Gardening", url: "https://www.youtube.com/@PikasGardening" },
+          { network: "Facebook", handle: "Facebook reel", url: "https://www.facebook.com/reel/2557686798080686" },
+        ],
+      },
       evidence: [],
       beforeAfter: null,
-      scores: { sat: 62, mangalmay: 54, sundar: 48, samriddhi: 41 },
+      scores: null,
+    },
+    {
+      id: "rupali-garden",
+      name: "Rupali Garden",
+      kind: "case-study",
+      farmerId: "krishna-biswas",
+      districtId: null,
+      acId: null,
+      village: null,
+      teamId: null,
+      agentId: null,
+      sizeAcres: null,
+      crop: null,
+      stage: null,
+      progress: null,
+      status: null,
+      lastVisit: null,
+      alerts: [],
+      contextualMediaId: null,
+      plots: [],
+      smart: null,
+      journey: [],
+      support: [
+        { role: "Agri-entrepreneur", name: "Krishna Biswas", id: "krishna-biswas" },
+      ],
+      social: {
+        public: true,
+        note: "Source references. Not treated as verified field evidence.",
+        channels: [
+          { network: "YouTube", handle: "Rupali Garden", url: "https://www.youtube.com/@RupaliGarden" },
+        ],
+      },
+      evidence: [],
+      beforeAfter: null,
+      scores: null,
     },
   ];
 
-  const activities = [
-    {
-      id: "act-maa-ganga-drip",
-      farmId: "maa-ganga",
-      farmerId: "farmer-014",
-      agentId: "ag-024",
-      teamId: "terai-tuskers",
-      districtId: "jalpaiguri",
-      acId: "jalpaiguri-maynaguri",
-      title: "Drip irrigation installation marked",
-      date: "2026-09-24",
-      status: "in_progress",
-      mediaIds: [],
-      note: "Main line still pending.",
-    },
-  ];
+  const activities = [];
 
   const MEDIA = [
     { id: "med-hero", type: "photo", src: "images/hero.jpg", caption: "Hall from the stage", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "featured" },
@@ -261,7 +276,7 @@
     { id: "med-paddy", type: "photo", src: "images/field/paddy.jpg", caption: "Paddy cultivation", context: "Editorial field context — crop", category: "crop", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
     { id: "med-pond", type: "photo", src: "images/field/pond.jpg", caption: "Farm pond", context: "Editorial field context — water", category: "water", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
     { id: "med-visit", type: "photo", src: "images/field/visit.jpg", caption: "Field visit", context: "Editorial field context — community", category: "community", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
-    { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", caption: "Irrigation layout", context: "Editorial farm context — Maa Ganga", category: "irrigation", date: null, relatedFarmId: "maa-ganga", relatedFarmerId: "farmer-014", relatedTeamId: "terai-tuskers", relatedActivityId: null, role: "contextual", placement: "farm" },
+    { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", caption: "Irrigation layout", context: "Editorial field context — irrigation", category: "irrigation", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
     { id: "med-cta", type: "photo", src: "images/launch-wide.jpg", caption: "Launch hall", context: "KRL Media Connect", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "cta" },
     { id: "med-session", type: "video", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/press-release-cover.jpg", caption: "Session film", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "link" },
   ];
@@ -290,7 +305,8 @@
     const tAgents = agents.filter((a) => a.teamId === teamId);
     const tAcs = acs.filter((a) => a.teamId === teamId);
     const covered = new Set(tFarmers.map((f) => f.acId)).size;
-    const progress = tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0;
+    const withProg = tFarms.filter((f) => typeof f.progress === "number");
+    const progress = withProg.length ? Math.round(withProg.reduce((s, f) => s + f.progress, 0) / withProg.length) : 0;
     const scores = SCORE_AXES.map((ax) => {
       const vals = tFarms.map((f) => (f.scores && f.scores[ax.id]) || 0);
       return { id: ax.id, label: ax.label, gloss: ax.gloss, value: vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0 };
@@ -314,11 +330,11 @@
     return {
       farmers: tFarmers.length,
       farms: tFarms.length,
-      teams: new Set(tFarmers.map((f) => f.teamId)).size,
-      agents: new Set(tFarmers.map((f) => f.agentId)).size,
+      teams: new Set(tFarmers.map((f) => f.teamId).filter(Boolean)).size,
+      agents: new Set(tFarmers.map((f) => f.agentId).filter(Boolean)).size,
       acs: tAcs.length,
-      acsCovered: new Set(tFarmers.map((f) => f.acId)).size,
-      progress: tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0,
+      acsCovered: new Set(tFarmers.map((f) => f.acId).filter(Boolean)).size,
+      progress: 0,
     };
   }
 
@@ -328,9 +344,9 @@
     return {
       farmers: tFarmers.length,
       farms: tFarms.length,
-      teams: new Set(tFarmers.map((f) => f.teamId)).size,
-      agents: new Set(tFarmers.map((f) => f.agentId)).size,
-      progress: tFarms.length ? Math.round(tFarms.reduce((s, f) => s + f.progress, 0) / tFarms.length) : 0,
+      teams: new Set(tFarmers.map((f) => f.teamId).filter(Boolean)).size,
+      agents: new Set(tFarmers.map((f) => f.agentId).filter(Boolean)).size,
+      progress: 0,
     };
   }
 
@@ -356,15 +372,19 @@
       targetAcs: acs.length,
       knownFarmers: farmers.length,
       knownFarms: farms.length,
+      caseStudies: farmers.filter((f) => f.kind === "case-study").length,
+      demoFarmers: DEMO_BOOK.farmers,
+      demoFarms: DEMO_BOOK.farms,
+      demoAgents: DEMO_BOOK.agents,
       teams: TEAMS.length,
       teamCapacity: TEAM_CAPACITY,
       agents: agents.length,
       districts: DISTRICTS.length,
       acs: acs.length,
-      acsCovered: new Set(farmers.map((f) => f.acId)).size,
-      districtsCovered: new Set(farmers.map((f) => f.districtId)).size,
+      acsCovered: new Set(farmers.map((f) => f.acId).filter(Boolean)).size,
+      districtsCovered: new Set(farmers.map((f) => f.districtId).filter(Boolean)).size,
       stageCounts,
-      meanProgress: Math.round(farms.reduce((s, f) => s + f.progress, 0) / farms.length),
+      meanProgress: 0,
     };
   }
 
@@ -385,9 +405,8 @@
       if (a.code.toLowerCase().includes(s) || a.name.toLowerCase().includes(s)) out.push({ type: "agent", id: a.id, label: a.code + " · " + a.name });
     });
     farmers.forEach((f) => {
-      if (f.name.toLowerCase().includes(s) || f.code.toLowerCase().includes(s) || f.village.toLowerCase().includes(s)) {
-        out.push({ type: "farmer", id: f.id, label: f.name + " · " + f.village });
-      }
+      const hay = [f.name, f.gardenName, f.id, f.village].filter(Boolean).join(" ").toLowerCase();
+      if (hay.includes(s)) out.push({ type: "farmer", id: f.id, label: f.gardenName ? f.name + " · " + f.gardenName : f.name });
     });
     farms.forEach((f) => {
       if (f.name.toLowerCase().includes(s) || f.id.includes(s)) out.push({ type: "farm", id: f.id, label: f.name });
@@ -429,10 +448,11 @@
   global.KRL = {
     META: {
       launched: "2026-09-14",
-      notice: "Known records only. Programme targets are published ambitions, not live enrolment.",
+      notice: "Case-study records and published programme architecture. Not live enrolment.",
       targetFarms: TARGET_FARMS,
       targetPerAc: TARGET_PER_AC,
       teamCapacity: TEAM_CAPACITY,
+      demoBook: DEMO_BOOK,
     },
     STAGES,
     STATUSES,
@@ -443,7 +463,9 @@
     ACS: acs,
     AGENTS: agents,
     FARMERS: farmers,
+    ENTREPRENEURS: farmers,
     FARMS: farms,
+    DEMO_BOOK,
     ACTIVITIES: activities,
     MEDIA,
     CROPS,
