@@ -30,3 +30,4 @@ Do not copy: yield/moisture overlays or FieldView product structure.
 5. Density without card walls.
 6. Team identity travels with every drill-down.
 7. Imagery is content; if there is no image, omit the media object.
+8. Knowledge-base-first: known → show; unknown → hide. No empty future slots, invented funnels, or fabricated alerts.

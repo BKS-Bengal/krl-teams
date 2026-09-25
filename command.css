@@ -134,7 +134,7 @@ button{background:none;border:0;cursor:pointer}
 
 .league{margin:8px 0 0}
 .register-list{display:grid}
-.reg-team{display:grid;grid-template-columns:72px 1.4fr 1.1fr .9fr .6fr;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.reg-team{display:grid;grid-template-columns:72px 1.4fr 1.1fr .9fr;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
 .reg-team img{width:64px;height:78px;object-fit:contain;background:#fff}
 .reg-team strong{display:block;font-size:16px}
 .reg-team span,.reg-team em{font-size:13px;color:var(--mute);font-style:normal}
@@ -219,6 +219,11 @@ table.data a{color:var(--field);font-weight:600}
 .gallery figcaption{padding:8px 0 4px;font-size:12px;color:var(--mute)}
 .gallery .wide{grid-column:span 2}
 .gallery .wide img,.gallery .wide video{aspect-ratio:16/9}
+.know-more{display:grid;grid-template-columns:minmax(200px,.75fr) 1.25fr;gap:28px;align-items:center;margin:36px 0 8px;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.know-more img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.know-more h2{font-size:clamp(22px,3vw,34px);letter-spacing:-.03em;font-weight:600;line-height:1.05}
+.know-more p{margin-top:10px;color:var(--mute);max-width:36em}
+.know-more-link{display:inline-flex;flex-wrap:wrap;gap:14px;margin-top:18px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--field);font-weight:600;border-bottom:1px solid var(--wheat);padding-bottom:3px}
 .ba{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .ba img{width:100%;aspect-ratio:16/10;object-fit:cover}
 .ba figcaption{padding:8px 0;font-size:12px;color:var(--mute)}
@@ -242,7 +247,7 @@ table.data a{color:var(--field);font-weight:600}
 .split-geo{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;margin-top:28px}
 
 @media(max-width:1100px){
-  .mast,.geo-command,.geo-page,.ops-split,.narrative,.dossier,.split-geo,.ident-row{grid-template-columns:1fr}
+  .mast,.geo-command,.geo-page,.ops-split,.narrative,.dossier,.split-geo,.ident-row,.know-more{grid-template-columns:1fr}
   .geo-frame,.geo-stage{margin-inline:auto}
   .journal{grid-template-columns:1fr 1fr}
   .scale{grid-template-columns:1fr 1fr}

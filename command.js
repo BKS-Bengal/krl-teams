@@ -7,6 +7,7 @@
   const searchInput = document.getElementById("search-input");
   const searchResults = document.getElementById("search-results");
   const PAGE = 24;
+  const MEDIA_CONNECT = "https://krl-media-connect.vercel.app/";
 
   const I18N = {
     en: {
@@ -22,6 +23,7 @@
       media: "Media",
       reports: "Reports",
       product: "KRL Teams",
+      know_more: "Know more",
     },
     bn: {
       notice: "ইন্টারফেস পরীক্ষার প্রোটোটাইপ খাতা. চালু কর্মসূচির পরিসংখ্যান নয়.",
@@ -36,6 +38,7 @@
       media: "মিডিয়া",
       reports: "প্রতিবেদন",
       product: "কেআরএল টিমস",
+      know_more: "আরও জানুন",
     },
   };
 
@@ -85,7 +88,7 @@
   function nameOf(type, id) {
     if (type === "district") return (D.byId(D.DISTRICTS, id) || {}).name || id;
     if (type === "ac") return (D.byId(D.ACS, id) || {}).name || id;
-    if (type === "team") return (D.byId(D.TEAMS, id) || D.byId(D.RESERVED_TEAMS, id) || {}).name || id;
+    if (type === "team") return (D.byId(D.TEAMS, id) || {}).name || id;
     if (type === "agent") return (D.byId(D.AGENTS, id) || {}).code || id;
     if (type === "farmer") return (D.byId(D.FARMERS, id) || {}).name || id;
     if (type === "farm") return (D.byId(D.FARMS, id) || {}).name || id;
@@ -119,16 +122,59 @@
 
 
   function teamIdentity(team, extra) {
-    if (!team) return "";
-    if (team.placeholder || !team.logo) {
-      return '<span class="tid pending"><span class="tid-void" aria-hidden="true"></span><span><b>Identity pending</b><small>' + esc(extra || ("Slot " + (team.slot || "") + " of 20")) + "</small></span></span>";
-    }
-    return '<span class="tid"><img src="' + esc(team.logo) + '" alt="' + esc(team.name) + '"><span><b>' + esc(team.name) + "</b><small>" + esc(extra || teamRegion(team)) + "</small></span></span>";
+    if (!team || team.placeholder || !team.logo) return "";
+    return '<span class="tid"><img src="' + esc(team.logo) + '" alt="' + esc(team.name) + ' official mark"><span><b>' + esc(team.name) + "</b><small>" + esc(extra || teamRegion(team)) + "</small></span></span>";
   }
 
   function teamMark(team) {
-    if (!team || team.placeholder || !team.logo) return '<span class="tid-void" aria-hidden="true"></span>';
-    return '<img src="' + esc(team.logo) + '" alt="' + esc(team.name) + '">';
+    if (!team || team.placeholder || !team.logo) return "";
+    return '<img src="' + esc(team.logo) + '" alt="' + esc(team.name) + ' official mark">';
+  }
+
+  function supportPeople(farm) {
+    return (farm.support || []).filter((p) => p.name && !/not assigned|pending/i.test(p.name));
+  }
+
+  function socialChannels(farm) {
+    return ((farm.social && farm.social.channels) || []).filter((c) => c.url);
+  }
+
+  function smartRows(farm) {
+    if (!farm.smart) return [];
+    return D.SMART_CATS.filter((c) => {
+      const row = farm.smart[c.id];
+      return row && row.status !== "not_started" && (row.pct > 0 || row.evidence > 0);
+    }).map((c) => Object.assign({ cat: c }, farm.smart[c.id]));
+  }
+
+  function hasAuthoredJourney(farm) {
+    return !!(farm.journey && farm.journey.some((j) => j.date && j.note && j.note !== "Prototype milestone."));
+  }
+
+  function farmAvailableTabs(farm) {
+    const tabs = [["overview", "Overview"]];
+    if (hasAuthoredJourney(farm)) tabs.push(["journey", "Farm journey"]);
+    if (smartRows(farm).length) tabs.push(["smart", "Smart farming"]);
+    if (farm.lastVisit || (farm.plots && farm.plots.length)) tabs.push(["monitor", "Monitoring"]);
+    if ((farm.evidence || []).length) tabs.push(["media", "Media"]);
+    if (supportPeople(farm).length) tabs.push(["people", "People and support"]);
+    if (socialChannels(farm).length) tabs.push(["social", "Social presence"]);
+    return tabs;
+  }
+
+  function mediaConnectCta() {
+    return `<aside class="know-more">
+      <figure><img src="images/banner.jpg" alt=""></figure>
+      <div>
+        <p class="sec-k">KRL Media Connect</p>
+        <h2>More stories, photographs and programme coverage</h2>
+        <p>The independent Media Connect archive holds the launch essay, session film and press record. KRL Teams stays here.</p>
+        <a class="know-more-link" href="${MEDIA_CONNECT}" target="_blank" rel="noopener noreferrer">
+          <span>Know more</span>
+          <span lang="bn">আরও জানুন</span>
+        </a>
+      </div>
+    </aside>`;
   }
 
   function captionFor(kind, title) {
@@ -152,16 +198,10 @@
         teamMark(t) +
         "<div><strong>" + esc(t.name) + "</strong><span>" + esc(teamRegion(t)) + "</span></div>" +
         "<span>" + st.agents + " agents</span>" +
-        "<span>" + st.farmers + " farmers · " + st.farms + " farms</span>" +
-        "<b class=\"sig\">" + st.progress + "%</b></a>";
-    }).join("") + D.RESERVED_TEAMS.map(function (t) {
-      return '<div class="reg-team pending">' +
-        '<span class="tid-void" aria-hidden="true"></span>' +
-        "<div><strong>Identity pending</strong><span>Slot " + t.slot + " of 20</span></div>" +
-        "<span>—</span><span>—</span><b class=\"sig\">—</b></div>";
+        "<span>" + st.farmers + " farmers · " + st.farms + " farms</span></a>";
     }).join("");
     return '<section class="league"><header class="sec-head"><p class="sec-k">Team network</p><h2>Team Register</h2>' +
-      "<p>Fifteen official identities. Five reserved slots remain unused. Counts are prototype book volumes, not live enrolment.</p></header>" +
+      "<p>Fifteen official identities. Counts are prototype book volumes, not live enrolment.</p></header>" +
       '<div class="register-list">' + rows + "</div></section>";
   }
 
@@ -218,21 +258,13 @@
     setNav("command");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
     const s = D.programmeStats();
-    const life = D.STAGES.map((st) => {
-      const n = s.stageCounts[st.id] || 0;
-      return `<li><b>${esc(stageLabel(st.id))}</b><em>${n}</em></li>`;
-    }).join("");
-    const attn = D.FARMS.filter((f) => f.status === "attention").slice(0, 6).map((f) =>
-      `<li><a href="${href("farm/" + f.id)}"><strong>${esc(f.name)}</strong><span>${esc(nameOf("farmer", f.farmerId))} · ${esc(nameOf("district", f.districtId))} · ${esc(f.lastVisit)}</span></a></li>`
-    ).join("");
-    const fieldStills = ["images/field/irrigation.jpg","images/field/paddy.jpg","images/field/pond.jpg","images/field/visit.jpg","images/field/training.jpg"];
-    const acts = D.ACTIVITIES.filter((a) => a.photo || a.farmId === "maa-ganga").slice(0, 5).map((a, i) => {
+    const acts = D.ACTIVITIES.filter((a) => a.photo).slice(0, 5).map((a) => {
       const farm = D.byId(D.FARMS, a.farmId);
       const agent = D.byId(D.AGENTS, a.agentId);
-      const src = a.photo || fieldStills[i % fieldStills.length];
-      return `<article><a href="${href("farm/" + a.farmId)}"><img src="${esc(src)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
+      return `<article><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
     }).join("");
-    const register = leagueBoard();
+    const flag = D.byId(D.FARMS, "maa-ganga");
+    const flagTeam = flag ? D.byId(D.TEAMS, flag.teamId) : null;
 
     return `
       <header class="mast">
@@ -240,19 +272,19 @@
           <p class="mast-k">Krishi Ratna League · Bharatiya Krishak Samaj</p>
           <h1>Smart Farming<br>Command Centre</h1>
           <p class="mast-place">West Bengal</p>
-          <p class="mast-sub">State to constituency to team to agent to farmer to farm to evidence.</p>
+          <p class="mast-sub">State to constituency to team to agent to farmer to farm.</p>
         </div>
         <div class="mast-aside">
-          <div><strong>Programme target</strong> ${s.targetFarmers.toLocaleString("en-IN")} farms · ${s.targetAcs} ACs · 15 teams</div>
-          <div><strong>Demo book</strong> Prototype volumes from 14 Sep 2026</div>
-          <div><strong>Coverage</strong> ${s.acsCovered} ACs · ${s.districtsCovered} districts · ${s.attention} need attention</div>
+          <div><strong>Programme target</strong> ${s.targetFarmers.toLocaleString("en-IN")} farmers</div>
+          <div><strong>State frame</strong> ${s.acs} assembly constituencies · ${s.teams} official teams</div>
+          <div><strong>Demo book</strong> ${s.prototypeFarmers} farmers · ${s.prototypeFarms} farms · ${s.agents} agents</div>
         </div>
       </header>
       <dl class="scale">
         <a href="${href("farmers")}"><dt>Demo farmers</dt><dd>${s.prototypeFarmers}</dd><small>Programme target ${s.targetFarmers.toLocaleString("en-IN")}</small></a>
-        <a href="${href("farms")}"><dt>Demo farms</dt><dd>${s.prototypeFarms}</dd><small>Programme target 20 per AC</small></a>
-        <a href="${href("geo")}"><dt>Field coverage</dt><dd>${s.acsCovered}<span style="font-size:.45em">/${s.acs}</span></dd><small>Assembly seats with records</small></a>
-        <a href="${href("farms", { status: "attention" })}"><dt>Attention</dt><dd>${s.attention}</dd><small>Mean path ${s.meanProgress}%</small></a>
+        <a href="${href("farms")}"><dt>Demo farms</dt><dd>${s.prototypeFarms}</dd><small>Holdings in the prototype book</small></a>
+        <a href="${href("agents")}"><dt>Demo agents</dt><dd>${s.agents}</dd><small>Field operators in the book</small></a>
+        <a href="${href("teams")}"><dt>Official teams</dt><dd>${s.teams}</dd><small>${s.acs} assembly constituencies</small></a>
       </dl>
       <section class="geo-command">
         <div>
@@ -260,18 +292,19 @@
           <h2 class="sec-title" style="margin-top:0">West Bengal</h2>
           ${wbMap(false)}
         </div>
-        <aside>
-          <h2 class="sec-title" style="margin-top:0">Needs attention</h2>
-          <ul class="attn">${attn || "<li>None flagged in this book.</li>"}</ul>
-          <h2 class="sec-title">Programme path</h2>
-          <ol class="path">${life}</ol>
-        </aside>
+        ${flag ? `<aside>
+          <p class="geo-kicker">Flagship record</p>
+          <h2 class="sec-title" style="margin-top:0">${esc(flag.name)}</h2>
+          ${teamIdentity(flagTeam, "Jalpaiguri · Maynaguri")}
+          <p class="mast-sub">68% implementation. Demo Farmer 014 · AG-024.</p>
+          <p><a href="${href("farm/maa-ganga")}">Open Farm 360</a></p>
+        </aside>` : ""}
       </section>
-      <section>
+      ${acts ? `<section>
         <header class="sec-head"><p class="sec-k">Field journal</p><h2>Current activity</h2></header>
         <div class="journal">${acts}</div>
-      </section>
-      ${register}`;
+      </section>` : ""}
+      ${leagueBoard()}`;
   }
 
   function districtTone(st) {
@@ -284,6 +317,7 @@
     const max = Math.max.apply(null, D.DISTRICTS.map((d) => D.districtStats(d.id).farmers)) || 1;
     const marks = D.DISTRICTS.map((d) => {
       const st = D.districtStats(d.id);
+      if (!st.farmers) return "";
       const left = ((d.x - 8) / 64) * 100;
       const top = ((d.y - 2) / 82) * 100;
       return `<a class="geo-dot ${districtTone(st)}" href="${href("district/" + d.id)}" style="left:${left}%;top:${top}%" title="${esc(d.name)}" aria-label="${esc(d.name)}"></a>`;
@@ -298,7 +332,7 @@
         <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
         <div class="geo-marks">${marks}</div>
       </div>
-      <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Indicated</span><span><b class="l-u"></b>Upcoming</span></p>
+      <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Present in the book</span></p>
       <p class="geo-note">Programme Geographic View. Not a cadastral map.</p>
     </div>
     ${withList === false ? "" : `<aside class="geo-register"><h2 class="sec-title" style="margin-top:0">District register</h2><div class="geo-list" role="list">${rows}</div></aside>`}`;
@@ -324,7 +358,7 @@
     const team = D.TEAMS.find((t) => t.districts.includes(id));
     const list = D.ACS.filter((a) => a.districtId === id).map((a) => {
       const as = D.acStats(a.id);
-      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${as.farmers} farmers · ${as.farms} farms</span><em>${as.progress || 0}%</em><em>${as.attention ? as.attention + " attn" : "—"}</em></a>`;
+      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${as.farmers} farmers · ${as.farms} farms</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">District</p>
@@ -337,8 +371,7 @@
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Teams</dt><dd>${st.teams}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
-      <div><dt>ACs covered</dt><dd>${st.acsCovered}/${st.acs}</dd></div>
-      <div><dt>Attention</dt><dd>${st.attention}</dd></div>
+      <div><dt>ACs in frame</dt><dd>${st.acs}</dd></div>
     </dl>
     <section class="register">
       <h2 class="sec-title">Assembly constituencies</h2>
@@ -374,10 +407,8 @@
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Teams</dt><dd>${st.teams}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
-      <div><dt>Progress</dt><dd>${st.progress || 0}%</dd></div>
-      <div><dt>Issues</dt><dd>${st.attention}</dd></div>
     </dl>
-    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Farmer</th><th>Farm</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty("No prototype farmers", "This AC is in the geography model. No demo farmer has been assigned yet.")}`;
+    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Farmer</th><th>Farm</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
   }
 
   function viewTeams() {
@@ -386,32 +417,23 @@
     return `<section class="ident"><div>
       <p class="mast-k">Organisation</p>
       <h1>Teams</h1>
-      <p>Fifteen official identities. Five slots remain unused until official identities exist.</p>
+      <p>Fifteen official identities in the current Knowledge Base.</p>
     </div></section>${leagueBoard()}`;
   }
 
   function viewTeam(id) {
     setNav("teams");
-    const team = D.byId(D.TEAMS, id) || D.byId(D.RESERVED_TEAMS, id);
-    if (!team) return notFound("Team", id);
+    const team = D.byId(D.TEAMS, id);
+    if (!team || team.placeholder) return notFound("Team", id);
     crumb([{ href: "#/", label: "West Bengal" }, { href: href("teams"), label: "Teams" }, { label: team.name }]);
-    if (team.placeholder) {
-      return `<section class="ident"><div>
-        <p class="mast-k">Reserved capacity · Slot ${team.slot} of 20</p>
-        <h1>Identity pending</h1>
-        <p>No official mark has been issued for this slot. None has been invented here.</p>
-      </div></section>${empty("Reserved capacity", "This side is not active in the current 15-team book.")}`;
-    }
     const st = D.teamStats(id);
-    const scores = st.scores.map((ax) => `<div><span>${esc(ax.label)}<br><small>${esc(ax.gloss)}</small></span><span class="bar" aria-hidden="true"><i style="width:${ax.value}%"></i></span><b>${ax.value}</b></div>`).join("");
     const teamAgents = D.AGENTS.filter((a) => a.teamId === id).map((a) => {
       const as = D.agentStats(a.id);
-      return `<a class="reg-row" href="${href("agent/" + a.id)}"><b>${esc(a.code)}</b><span>${esc(a.name)}</span><em>${as.farmers} farmers</em><em>${as.issues} issues</em></a>`;
+      return `<a class="reg-row" href="${href("agent/" + a.id)}"><b>${esc(a.code)}</b><span>${esc(a.name)}</span><em>${as.farmers} farmers</em><em>${as.farms} farms</em></a>`;
     }).join("");
-    const attn = D.FARMS.filter((f) => f.teamId === id && f.status === "attention").slice(0, 8);
-    const acts = D.ACTIVITIES.filter((a) => a.teamId === id).slice(0, 6).map((a) => {
+    const acts = D.ACTIVITIES.filter((a) => a.teamId === id && a.photo).slice(0, 6).map((a) => {
       const farm = D.byId(D.FARMS, a.farmId);
-      return a.photo ? `<article class="act"><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>` : "";
+      return `<article class="act"><a href="${href("farm/" + a.farmId)}"><img src="${esc(a.photo)}" alt="${esc(a.title)}"><div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>`;
     }).join("");
     const districts = team.districts.map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
     return `<section class="ident ident-row">${teamMark(team)}<div>
@@ -419,33 +441,21 @@
       <h1>${esc(team.name)}</h1>
       <p>${districts}</p>
     </div></section>
-    <p class="notice">Early-season prototype averages. Season 1 awards are specified for Durga Puja 2027. No champion is declared here.</p>
     <dl class="ledger">
       <div><dt>Farmers</dt><dd>${st.farmers}</dd></div>
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
       <div><dt>ACs</dt><dd>${st.acsCovered}/${st.acs}</dd></div>
       <div><dt>Districts</dt><dd>${st.districts}</dd></div>
-      <div><dt>Progress</dt><dd>${st.progress}%</dd></div>
     </dl>
-    <div class="split-geo">
-      <section>
-        <h2 class="sec-title">Scoring model</h2>
-        <div class="score-row">${scores}</div>
-      </section>
-      <section>
-        <h2 class="sec-title">Agents</h2>
-        <div class="register">${teamAgents}</div>
-      </section>
-    </div>
-    <section class="rail">
-      <h2 class="sec-title">Recent activity</h2>
-      <div class="film">${acts || empty("No activity", "No visits on this side yet.")}</div>
+    <section>
+      <h2 class="sec-title">Agents</h2>
+      <div class="register">${teamAgents}</div>
     </section>
-    <section class="register">
-      <h2 class="sec-title">Farms needing attention</h2>
-      ${attn.length ? attn.map((f) => `<a class="reg-row" href="${href("farm/" + f.id)}"><b>${esc(f.name)}</b><span>${esc(nameOf("farmer", f.farmerId))}</span><em>${esc(f.lastVisit)}</em><em>${f.progress}%</em></a>`).join("") : empty("None flagged", "No attention items on this team in the prototype book.")}
-    </section>`;
+    ${acts ? `<section class="rail">
+      <h2 class="sec-title">Recent activity</h2>
+      <div class="film">${acts}</div>
+    </section>` : ""}`;
   }
 
   function viewAgents(params) {
@@ -456,7 +466,7 @@
     const slice = pageSlice(list, params.page);
     const rows = slice.rows.map((a) => {
       const st = D.agentStats(a.id);
-      return `<tr><td><a href="${href("agent/" + a.id)}">${esc(a.code)}</a></td><td>${esc(a.name)}</td><td><a href="${href("team/" + a.teamId)}">${teamIdentity(D.byId(D.TEAMS, a.teamId))}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.issues}</td><td>${st.progress}%</td></tr>`;
+      return `<tr><td><a href="${href("agent/" + a.id)}">${esc(a.code)}</a></td><td>${esc(a.name)}</td><td><a href="${href("team/" + a.teamId)}">${teamIdentity(D.byId(D.TEAMS, a.teamId))}</a></td><td>${st.farmers}</td><td>${st.farms}</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Field roster</p>
@@ -464,7 +474,7 @@
       <p>${list.length} agents in the prototype book.</p>
     </div></section>
       ${filtersBar(params)}
-      <div class="table-wrap"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Team</th><th>Farmers</th><th>Farms</th><th>Issues</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="table-wrap"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Team</th><th>Farmers</th><th>Farms</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${pager("agents", slice, params)}`;
   }
 
@@ -484,8 +494,7 @@
         <td>${esc(team.name)}</td>
         <td>${esc(stageLabel(f.stage))}</td>
         <td>${f.progress}%</td>
-        <td>${esc(farm ? farm.lastVisit : "—")}</td>
-        <td>${farm ? statusBadge(farm.status) : ""}</td>
+        <td>${esc(farm ? farm.lastVisit : "")}</td>
       </tr>`;
     }).join("");
     return `<section class="ident ident-row">${teamMark(team)}<div>
@@ -495,15 +504,11 @@
     </div></section>
     <dl class="ledger">
       <div><dt>Assigned farmers</dt><dd>${st.farmers}</dd></div>
-      <div><dt>Active farms</dt><dd>${st.farms}</dd></div>
+      <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Visits</dt><dd>${st.visits}</dd></div>
-      <div><dt>Pending</dt><dd>${st.pending}</dd></div>
-      <div><dt>Issues</dt><dd>${st.issues}</dd></div>
-      <div><dt>Average progress</dt><dd>${st.progress}%</dd></div>
     </dl>
-    <h2 style="margin:22px 0 12px;font-size:20px">My farmers</h2>
-    ${mine.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farmer</th><th>Farm</th><th>Team</th><th>Stage</th><th>Progress</th><th>Last visit</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty("No assigned farmers", "This agent has an empty book in the prototype.")}
-    <p class="notice" style="margin-top:16px">Field actions on a phone: open a farm, record activity, add a note. Uploads are not connected in this prototype.</p>`;
+    ${mine.length ? `<h2 style="margin:22px 0 12px;font-size:20px">Farmers</h2>
+    <div class="table-wrap"><table class="data"><thead><tr><th>Farmer</th><th>Farm</th><th>Team</th><th>Stage</th><th>Progress</th><th>Last visit</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
   }
 
   function viewFarmers(params) {
@@ -569,10 +574,10 @@
       <div><dt>Farms</dt><dd>${f.farmIds.length}</dd></div>
     </dl>
     <ol class="spine">
-      <li><h3>Voice</h3><p>${esc(f.voice || "No verified farmer voice is on this prototype record.")}</p></li>
-      <li><h3>Why</h3><p>${esc(f.goal)}</p></li>
-      <li><h3>Constraint</h3><p>${esc(f.challenge)}</p></li>
-      <li><h3>Recorded so far</h3><p>${esc(f.achievement || "None recorded.")}</p></li>
+      ${f.voice ? `<li><h3>Voice</h3><p>${esc(f.voice)}</p></li>` : ""}
+      ${f.goal && f.goal !== "Complete onboarding and first training." ? `<li><h3>Why</h3><p>${esc(f.goal)}</p></li>` : ""}
+      ${f.challenge && f.challenge !== "Awaiting verification visit." ? `<li><h3>Constraint</h3><p>${esc(f.challenge)}</p></li>` : ""}
+      ${f.achievement ? `<li><h3>Recorded so far</h3><p>${esc(f.achievement)}</p></li>` : ""}
     </ol>
     <section class="register">
       <h2 class="sec-title">Farms</h2>
@@ -596,27 +601,18 @@
       <td><a href="${href("team/" + f.teamId)}">${teamIdentity(D.byId(D.TEAMS, f.teamId))}</a></td>
       <td>${esc(stageLabel(f.stage))}</td>
       <td>${f.progress}%</td>
-      <td>${statusBadge(f.status)}</td>
     </tr>`).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Holdings</p>
       <h1>Farms</h1>
       <p>${list.length} demo farms. Distinct from the farmer who holds them.</p>
     </div></section>
-      ${filtersBar(params, `<label>Status <select name="status"><option value="">All</option>${D.STATUSES.map((s) => `<option value="${s.id}" ${params.status === s.id ? "selected" : ""}>${esc(s.label)}</option>`).join("")}</select></label>`)}
-      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farm</th><th>Farmer</th><th>District</th><th>Team</th><th>Stage</th><th>Progress</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farms", slice, params)}` : empty("No farms match", "Change filters or clear search.")}`;
+      ${filtersBar(params)}
+      ${list.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Farm</th><th>Farmer</th><th>District</th><th>Team</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("farms", slice, params)}` : empty("No farms match", "Change filters or clear search.")}`;
   }
 
   function farmTabs(farm, tab) {
-    const tabs = [
-      ["overview", "Overview"],
-      ["journey", "Farm journey"],
-      ["smart", "Smart farming"],
-      ["monitor", "Monitoring"],
-      ["media", "Media and evidence"],
-      ["people", "People and support"],
-      ["social", "Social presence"],
-    ];
+    const tabs = farmAvailableTabs(farm);
     return `<nav class="tabs" aria-label="Farm sections">${tabs.map(([id, label]) =>
       `<a href="${href("farm/" + farm.id + "/" + id)}" ${tab === id ? 'aria-current="page"' : ""}>${label}</a>`
     ).join("")}</nav>`;
@@ -662,50 +658,43 @@
     if (!farm) return notFound("Farm", id);
     const farmer = D.byId(D.FARMERS, farm.farmerId);
     const agent = D.byId(D.AGENTS, farm.agentId);
-    const current = tab || "overview";
+    const allowed = farmAvailableTabs(farm).map((x) => x[0]);
+    const current = allowed.includes(tab) ? tab : "overview";
     const head = farmHeader(farm) + farmTabs(farm, current);
 
     if (current === "journey") {
-      const items = (farm.journey || []).map((j) => `<li data-status="${esc(j.status)}">
-        <time>${j.date || "—"}</time><i></i>
-        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)} · ${esc(agent.code)} · ${j.evidence} evidence</p>
+      const items = (farm.journey || []).filter((j) => j.date).map((j) => `<li data-status="${esc(j.status)}">
+        <time>${esc(j.date)}</time><i></i>
+        <div><h3>${esc(j.title)}</h3><p>${esc(j.note)} · ${esc(agent.code)}${j.evidence ? " · " + j.evidence + " evidence" : ""}</p>
         ${j.evidence ? `<p><a href="${href("farm/" + farm.id + "/media")}">View evidence</a></p>` : ""}</div>
       </li>`).join("");
       return head + `<ol class="journey">${items}</ol>`;
     }
 
     if (current === "smart") {
-      if (!farm.smart) {
-        return head + empty("No smart-farming claim", "This demo farm has not been given a technology profile. Categories appear only when the book supports them.");
-      }
-      const cards = D.SMART_CATS.map((c) => {
-        const row = farm.smart[c.id];
-        if (!row) return "";
-        return `<article>
-          <h3>${esc(c.label)}</h3>
+      const cards = smartRows(farm).map((row) => `<article>
+          <h3>${esc(row.cat.label)}</h3>
           <div class="progress"><span class="bar" aria-hidden="true"><i style="width:${row.pct}%"></i></span><strong>${row.pct}%</strong></div>
-          <p>${statusBadge(row.status)} · ${row.updated || "no date"} · ${row.evidence} evidence · ${esc(agent.code)}</p>
+          <p>${statusBadge(row.status)}${row.updated ? " · " + esc(row.updated) : ""} · ${esc(agent.code)}</p>
           <p>${esc(row.note)}</p>
-          ${row.evidence ? `<p>${row.evidence} ${row.evidence === 1 ? "item" : "items"} · <a href="${href("farm/" + farm.id + "/media")}">View evidence</a></p>` : "<p>No evidence attached.</p>"}
-        </article>`;
-      }).join("");
-      return head + `<p class="notice">UX categories only. A system is shown as in use only when the prototype record says so.</p><div class="smart">${cards}</div>`;
+          ${row.evidence ? `<p>${row.evidence} ${row.evidence === 1 ? "item" : "items"} · <a href="${href("farm/" + farm.id + "/media")}">View evidence</a></p>` : ""}
+        </article>`).join("");
+      return head + `<div class="smart">${cards}</div>`;
     }
 
     if (current === "monitor") {
       const latest = D.ACTIVITIES.find((a) => a.farmId === farm.id);
       return head + `<dl class="ledger">
         <div><dt>Current stage</dt><dd style="font-size:16px">${esc(stageLabel(farm.stage))}</dd></div>
-        <div><dt>Last visit</dt><dd style="font-size:16px">${esc(farm.lastVisit)}</dd></div>
+        ${farm.lastVisit ? `<div><dt>Last visit</dt><dd style="font-size:16px">${esc(farm.lastVisit)}</dd></div>` : ""}
         <div><dt>Agent</dt><dd style="font-size:16px">${esc(agent.code)}</dd></div>
-        <div><dt>Alerts</dt><dd style="font-size:16px">${farm.alerts.length ? esc(farm.alerts.join("; ")) : "None"}</dd></div>
-        <div><dt>Latest activity</dt><dd style="font-size:16px">${latest ? esc(latest.title) : "No visit logged"}</dd></div>
+        ${latest ? `<div><dt>Latest activity</dt><dd style="font-size:16px">${esc(latest.title)}</dd></div>` : ""}
         <div><dt>Plots</dt><dd>${farm.plots.length}</dd></div>
       </dl>
-      <section class="register">
+      ${farm.plots.length ? `<section class="register">
         <h2 class="sec-title">Plots</h2>
         ${farm.plots.map((p) => `<div class="reg-row"><b>${esc(p.name)}</b><span>${esc(p.crop)}</span><em>${esc(p.size)}</em><em></em></div>`).join("")}
-      </section>`;
+      </section>` : ""}`;
     }
 
     if (current === "media") {
@@ -717,55 +706,52 @@
         return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(captionFor(e.type, e.title))} · ${esc(farm.name)} · ${esc(e.date)}</figcaption></figure>`;
       }).join("");
       const ba = farm.beforeAfter
-        ? `<h2 style="margin:22px 0 12px;font-size:18px">Before / after</h2><div class="ba">
-            <figure><img src="${esc(farm.beforeAfter.before.src)}" alt="Demo before frame"><figcaption>Irrigation planning · ${esc(farm.beforeAfter.before.caption)}</figcaption></figure>
-            <figure><img src="${esc(farm.beforeAfter.after.src)}" alt="Demo after frame"><figcaption>Smart farming implementation · ${esc(farm.beforeAfter.after.caption)}</figcaption></figure>
+        ? `<h2 style="margin:22px 0 12px;font-size:18px">Field sequence</h2><div class="ba">
+            <figure><img src="${esc(farm.beforeAfter.before.src)}" alt=""><figcaption>Irrigation planning</figcaption></figure>
+            <figure><img src="${esc(farm.beforeAfter.after.src)}" alt=""><figcaption>Smart farming implementation</figcaption></figure>
           </div>`
         : "";
-      return head + (ev.length ? `<div class="gallery">${gal}</div>${ba}` : empty("No evidence", "No photo or video is attached to this farm yet."));
+      return head + `<div class="gallery">${gal}</div>${ba}${mediaConnectCta()}`;
     }
 
     if (current === "people") {
-      const people = (farm.support || []).map((p) => {
+      const people = supportPeople(farm).map((p) => {
         const link = p.id && p.role === "Farmer" ? href("farmer/" + p.id)
           : p.id && p.role === "Agent" ? href("agent/" + p.id)
           : p.id && p.role === "Team" ? href("team/" + p.id)
           : null;
         return `<article><small>${esc(p.role)}</small><strong>${link ? `<a href="${link}">${esc(p.name)}</a>` : esc(p.name)}</strong></article>`;
       }).join("");
-      return head + `<p>Who is helping this farm succeed. Kept short on purpose.</p><div class="people" style="margin-top:14px">${people}</div>`;
+      return head + `<div class="people" style="margin-top:14px">${people}</div>`;
     }
 
     if (current === "social") {
-      const social = farm.social || { channels: [] };
-      const rows = (social.channels || []).map((c) => `<article>
+      const rows = socialChannels(farm).map((c) => `<article>
         <small>${esc(c.network)}</small>
-        <strong>${c.url ? `<a href="${esc(c.url)}" rel="noopener noreferrer" target="_blank">${esc(c.handle)}</a>` : esc(c.handle)}</strong>
+        <strong><a href="${esc(c.url)}" rel="noopener noreferrer" target="_blank">${esc(c.handle)}</a></strong>
       </article>`).join("");
-      return head + `<p>${esc(social.note)}</p>${rows ? `<div class="people" style="margin-top:14px">${rows}</div>` : empty("No public handles", "Social media is optional. Private farmer accounts are not exposed.")}`;
+      return head + `<p>${esc((farm.social && farm.social.note) || "")}</p><div class="people" style="margin-top:14px">${rows}</div>`;
     }
 
     const latest = D.ACTIVITIES.find((a) => a.farmId === farm.id);
     const ev = (farm.evidence || []).slice(0, 3);
     const plan = farm.id === "maa-ganga"
-      ? "Integrated crop management with monitored irrigation, soil practices and seasonal field activities. Demo plan only."
-      : "No smart-farming plan is attached to this prototype record.";
+      ? "Integrated crop management with monitored irrigation, soil practices and seasonal field activities."
+      : "";
+    const why = farmer.challenge && farmer.challenge !== "Awaiting verification visit." ? farmer.challenge : "";
     return head + `<div class="narrative">
       <ol class="spine">
         <li><h3>Who</h3><p><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a> · ${esc(farmer.code)}</p></li>
         <li><h3>Where</h3><p>${esc([...new Set([nameOf("district", farm.districtId), nameOf("ac", farm.acId), farm.village])].join(" · "))}</p></li>
-        <li><h3>Why</h3><p>${esc(farmer.challenge)}</p></li>
+        ${why ? `<li><h3>Why</h3><p>${esc(why)}</p></li>` : ""}
         <li><h3>What</h3><p>${farm.sizeAcres} acres · ${esc(farm.crop)}</p></li>
-        <li><h3>How</h3><p>${esc(plan)}</p></li>
-        <li><h3>Progress</h3><p>${farm.progress}% of the programme path · ${esc(stageLabel(farm.stage))}. ${esc(farmer.achievement || "Early-stage record.")}</p></li>
-        <li><h3>Evidence</h3><p>${(farm.evidence || []).length} items on this record. <a href="${href("farm/" + farm.id + "/media")}">Open gallery</a></p></li>
-        <li><h3>People</h3><p><a href="${href("agent/" + agent.id)}">${esc(agent.code)}</a> · <a href="${href("team/" + farm.teamId)}">${esc(nameOf("team", farm.teamId))}</a> · <a href="${href("farm/" + farm.id + "/people")}">Support network</a></p></li>
-        <li><h3>Outcome</h3><p>No harvest outcome is claimed. Next: ${esc(farmer.goal)}</p></li>
+        ${plan ? `<li><h3>How</h3><p>${esc(plan)}</p></li>` : ""}
+        <li><h3>Progress</h3><p>${farm.progress}% · ${esc(stageLabel(farm.stage))}${farmer.achievement ? ". " + esc(farmer.achievement) : ""}</p></li>
+        ${ev.length ? `<li><h3>Evidence</h3><p>${ev.length} items on this record. <a href="${href("farm/" + farm.id + "/media")}">Open gallery</a></p></li>` : ""}
+        <li><h3>People</h3><p><a href="${href("agent/" + agent.id)}">${esc(agent.code)}</a> · <a href="${href("team/" + farm.teamId)}">${esc(nameOf("team", farm.teamId))}</a>${allowed.includes("people") ? ` · <a href="${href("farm/" + farm.id + "/people")}">Support network</a>` : ""}</p></li>
       </ol>
       <aside>
-        <h2 class="sec-title">Now on the farm</h2>
-        <p class="now">${latest ? `${esc(latest.title)} · ${esc(latest.date)}` : "No current activity."}</p>
-        <p class="now mute">${farm.alerts.length ? esc(farm.alerts.join("; ")) : "No alerts on this record."}</p>
+        ${latest ? `<h2 class="sec-title">Now on the farm</h2><p class="now">${esc(latest.title)} · ${esc(latest.date)}</p>` : ""}
         ${ev.length ? ev.map((e) => `<figure class="now-fig"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.date)}</figcaption></figure>`).join("") : ""}
         ${farmer.voice ? `<blockquote class="voice">${esc(farmer.voice)}</blockquote>` : ""}
       </aside>
@@ -814,12 +800,11 @@
     return `<section class="ident"><div>
       <p class="mast-k">Archive</p>
       <h1>Media</h1>
-      <p>Launch archive from Media Connect, then farm evidence marked as prototype.</p>
+      <p>Selected programme stills and farm records available in this book.</p>
     </div></section>
-      <h2 style="font-size:18px;margin:8px 0 12px">Programme archive</h2>
-      <div class="gallery">${prog}</div>
-      <h2 style="font-size:18px;margin:22px 0 12px">Farm evidence</h2>
-      ${farmEv.length ? `<div class="gallery">${farmEv.slice(0,5).map((e,i) => `<figure class="${i===0?"wide":""}"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.farm.name)}</figcaption></figure>`).join("")}</div>` : ""}`;
+      ${prog ? `<h2 style="font-size:18px;margin:8px 0 12px">Programme archive</h2><div class="gallery">${prog}</div>` : ""}
+      ${farmEv.length ? `<h2 style="font-size:18px;margin:22px 0 12px">Farm records</h2><div class="gallery">${farmEv.slice(0,5).map((e,i) => `<figure class="${i===0?"wide":""}"><img src="${esc(e.poster || e.src)}" alt="${esc(e.title)}"><figcaption>${esc(captionFor(e.type, e.title))} · ${esc(e.farm.name)}</figcaption></figure>`).join("")}</div>` : ""}
+      ${mediaConnectCta()}`;
   }
 
   function viewReports() {
@@ -828,22 +813,22 @@
     const s = D.programmeStats();
     const teamRows = D.TEAMS.map((t) => {
       const st = D.teamStats(t.id);
-      return `<tr><td><a href="${href("team/" + t.id)}">${teamIdentity(t)}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.progress}%</td><td>${st.attention}</td></tr>`;
+      return `<tr><td><a href="${href("team/" + t.id)}">${teamIdentity(t)}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.agents}</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Operations</p>
       <h1>Reports</h1>
-      <p>Operational snapshot of the prototype book. Not a published league table.</p>
+      <p>Book volumes only. Not a published league table.</p>
     </div></section>
       <dl class="ledger">
-        <div><dt>Prototype farmers</dt><dd>${s.prototypeFarmers}</dd></div>
-        <div><dt>Prototype farms</dt><dd>${s.prototypeFarms}</dd></div>
-        <div><dt>AC model</dt><dd>${s.acs}</dd></div>
-        <div><dt>Covered ACs</dt><dd>${s.acsCovered}</dd></div>
-        <div><dt>Mean progress</dt><dd>${s.meanProgress}%</dd></div>
-        <div><dt>Attention</dt><dd>${s.attention}</dd></div>
+        <div><dt>Demo farmers</dt><dd>${s.prototypeFarmers}</dd></div>
+        <div><dt>Demo farms</dt><dd>${s.prototypeFarms}</dd></div>
+        <div><dt>Demo agents</dt><dd>${s.agents}</dd></div>
+        <div><dt>Official teams</dt><dd>${s.teams}</dd></div>
+        <div><dt>ACs in frame</dt><dd>${s.acs}</dd></div>
+        <div><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd></div>
       </dl>
-      <div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Team</th><th>Farmers</th><th>Farms</th><th>ACs</th><th>Progress</th><th>Attention</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
+      <div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Team</th><th>Farmers</th><th>Farms</th><th>ACs</th><th>Agents</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
   }
 
   function resolveAcId(id) {
