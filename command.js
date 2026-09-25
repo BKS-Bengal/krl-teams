@@ -205,6 +205,18 @@
     return "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
   }
 
+  function portraitOf(person) {
+    const img = person && person.profileImage;
+    if (img && img.src && img.subject === "person") return img;
+    return null;
+  }
+
+  function personStill(person) {
+    const p = portraitOf(person);
+    if (!p) return "";
+    return `<a class="person-still" href="${href("farmer/" + person.id)}"><img src="${esc(p.src)}" alt="${esc(person.name)}"></a>`;
+  }
+
   function campaignDesk() {
     const shots = [
       { src: "images/campaign/hook-home.jpg", title: "Krishi Ratna League campaign story" },
@@ -336,12 +348,12 @@
     const team = assignedTeam(person);
     const zone = teamZone(team);
     const clip = sourceVideos(person)[0];
-    const portrait = person.profileImage;
+    const portrait = portraitOf(person);
     const visual = portrait || (clip ? { src: ytThumb(clip.youtubeId), caption: "Source film · " + clip.title + ". Not a field portrait." } : null);
     return `<section class="player"${team ? ` style="--accent:${esc(team.accent)}"` : ""}>
-      ${visual ? `<figure class="player-still">
-        <img src="${esc(visual.src)}" alt="${esc(visual.caption || person.name)}">
-        <figcaption>${esc(visual.caption || "Source film. Not a field portrait.")}</figcaption>
+      ${visual ? `<figure class="player-still${portrait ? " is-portrait" : ""}">
+        <img src="${esc(visual.src)}" alt="${esc(portrait ? person.name : (visual.caption || person.name))}">
+        ${portrait ? "" : `<figcaption>${esc(visual.caption || "Source film. Not a field portrait.")}</figcaption>`}
       </figure>` : ""}
       <div class="player-copy">
         <p class="label">Agri-entrepreneur</p>
@@ -366,7 +378,7 @@
     const clip = sourceVideos(person)[0];
     const team = assignedTeam(person);
     return `<article class="squad-card reveal">
-      ${clip ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>` : ""}
+      ${personStill(person) || (clip ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>` : "")}
       <h3><a href="${href("farmer/" + person.id)}">${esc(person.name)}</a></h3>
       ${person.gardenName ? `<p class="story-garden">${esc(person.gardenName)}</p>` : ""}
       ${team ? teamIdentity(team) : ""}
@@ -397,9 +409,10 @@
       const zone = teamZone(team);
       const clip = sourceVideos(person)[0];
       const channels = digitalLinks(person).map((c) => esc(c.network)).join(" · ");
-      const visual = person.profileImage || (clip ? { src: ytThumb(clip.youtubeId), caption: clip.title } : null);
+      const portrait = portraitOf(person);
+      const visual = portrait || (clip ? { src: ytThumb(clip.youtubeId), caption: clip.title } : null);
       return `<article class="feat reveal">
-        ${visual ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${esc(visual.src)}" alt="${esc(visual.caption || person.name)}"></a>` : ""}
+        ${portrait ? personStill(person) : visual ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${esc(visual.src)}" alt="${esc(visual.caption || person.name)}"></a>` : ""}
         <p class="label">${person.id === "amit-shill" ? "Primary case" : "Secondary case"}</p>
         <h3><a href="${href("farmer/" + person.id)}">${esc(person.name)}</a></h3>
         ${person.gardenName ? `<p class="story-garden">${esc(person.gardenName)}</p>` : ""}
@@ -925,13 +938,14 @@
     if (params.team) list = list.filter((f) => f.teamId === params.team);
     if (params.district) list = list.filter((f) => f.districtId === params.district);
     const slice = pageSlice(list, params.page);
-    const cast = list.filter((f) => sourceVideos(f).length).map((f) => {
+    const cast = list.filter((f) => portraitOf(f) || sourceVideos(f).length).map((f) => {
       const clip = sourceVideos(f)[0];
+      const portrait = portraitOf(f);
       return `<article class="cast">
-        <a class="story-still" href="${href("farmer/" + f.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>
+        ${portrait ? personStill(f) : `<a class="story-still" href="${href("farmer/" + f.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>`}
         <p class="label">${esc(f.gardenName || "Garden")}</p>
         <h2><a href="${href("farmer/" + f.id)}">${esc(f.name)}</a></h2>
-        <p class="meta">${esc(clip.title)}</p>
+        ${!portrait && clip ? `<p class="meta">${esc(clip.title)}</p>` : ""}
       </article>`;
     }).join("");
     const rows = slice.rows.map((f) => {
