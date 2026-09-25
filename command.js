@@ -209,7 +209,7 @@
     const rows = D.TEAMS.map(function (t) {
       const st = D.teamStats(t.id);
       const known = [];
-      if (st.farmers) known.push(st.farmers + (st.farmers === 1 ? " farmer" : " farmers"));
+      if (st.farmers) known.push(st.farmers + (st.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs"));
       if (st.farms) known.push(st.farms + (st.farms === 1 ? " farm" : " farms"));
       if (st.agents) known.push(st.agents + (st.agents === 1 ? " agent" : " agents"));
       return '<a class="reg-team" href="' + href("team/" + t.id) + '">' +
@@ -340,7 +340,7 @@
     const rows = D.DISTRICTS.map((d) => {
       const st = D.districtStats(d.id);
       const pct = Math.round((st.farmers / max) * 100);
-      return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers ? st.farmers + (st.farmers === 1 ? " farmer" : " farmers") : st.acs + " ACs"}</em>${st.farmers ? `<span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ""}</a>`;
+      return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers ? st.farmers + (st.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs") : st.acs + " ACs"}</em>${st.farmers ? `<span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ""}</a>`;
     }).join("");
     return `<div class="geo-frame">
       <div class="geo-stage">
@@ -359,7 +359,7 @@
     return `<section class="ident"><div>
       <p class="mast-k">Programme Geographic View</p>
       <h1>Geography</h1>
-      <p>West Bengal to district to assembly constituency to the field network. This is a programme geographic view, not a cadastral map.</p>
+      <p>West Bengal to district to assembly constituency to the field network. Agricultural planning here is geography-aware and area-specific. This is a programme geographic view, not a cadastral map, and not a live statistical bulletin.</p>
     </div></section>
       <div class="geo-page">${wbMap(true)}</div>`;
   }
@@ -373,8 +373,8 @@
     const team = D.TEAMS.find((t) => t.districts.includes(id));
     const list = D.ACS.filter((a) => a.districtId === id).map((a) => {
       const as = D.acStats(a.id);
-      const known = as.farmers ? as.farmers + (as.farmers === 1 ? " farmer" : " farmers") + " · " + as.farms + (as.farms === 1 ? " farm" : " farms") : "In the state frame";
-      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${known}</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
+      const known = as.farmers ? as.farmers + (as.farmers === 1 ? " agri-entrepreneur" : " agri-entrepreneurs") + " · " + as.farms + (as.farms === 1 ? " farm" : " farms") : "In the state frame";
+      return `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.officialNo ? a.officialNo + " – " + a.name : a.name)}</b><span>${known}</span><em>${as.progress ? as.progress + "%" : ""}</em><em></em></a>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">District</p>
@@ -383,7 +383,7 @@
       <p>${d.acs.length} assembly constituencies in the state frame</p>
     </div></section>
     <dl class="ledger">
-      <div><dt>Farmers</dt><dd>${st.farmers}</dd></div>
+      <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Teams</dt><dd>${st.teams}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
@@ -419,12 +419,12 @@
       <p>${esc(d.name)} · target ${D.META.targetPerAc} farms at full book</p>
     </div></section>
     <dl class="ledger">
-      <div><dt>Farmers</dt><dd>${st.farmers}</dd></div>
+      <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Teams</dt><dd>${st.teams}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
     </dl>
-    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Farmer</th><th>Farm</th><th>Stage</th><th>Progress</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
+    ${people.length ? `<div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Agri-entrepreneur</th><th>Farm</th><th>Record</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
   }
 
   function viewTeams() {
@@ -461,7 +461,7 @@
       <p>${districts}</p>
     </div></section>
     <dl class="ledger">
-      <div><dt>Farmers</dt><dd>${st.farmers}</dd></div>
+      <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
       <div><dt>Farms</dt><dd>${st.farms}</dd></div>
       <div><dt>Agents</dt><dd>${st.agents}</dd></div>
       <div><dt>ACs</dt><dd>${st.acs}</dd></div>
@@ -498,7 +498,7 @@
     </div></section>
       ${list.length ? `${filtersBar(params)}
       <div class="table-wrap"><table class="data"><thead><tr><th>Code</th><th>Name</th><th>Team</th><th>Farmers</th><th>Farms</th></tr></thead><tbody>${rows}</tbody></table></div>
-      ${pager("agents", slice, params)}` : ""}`;
+      ${pager("agents", slice, params)}` : empty("No named agents yet", "The 120-agent demo-book volume is architecture, not a generated roster.")}`;
   }
 
   function viewAgent(id) {
@@ -589,6 +589,10 @@
       <li><h3>Farm / garden</h3><p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")}</p></li>
       ${f.districtId || f.acId ? `<li><h3>Where</h3><p>${f.districtId ? `<a href="${href("district/" + f.districtId)}">${esc(nameOf("district", f.districtId))}</a>` : ""}${f.acId ? ` · <a href="${href("ac/" + f.acId)}">${esc(nameOf("ac", f.acId))}</a>` : ""} · West Bengal</p></li>` : ""}
       ${team ? `<li><h3>Programme connection</h3><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${f.teamSource === "district-mapping" ? " · from district geography, not a claimed enrolment record" : ""}</p></li>` : ""}
+      ${f.practice ? `<li><h3>What they grow / do</h3><p>${esc(f.practice)}</p></li>` : ""}
+      ${f.space ? `<li><h3>Farm space</h3><p>${esc(f.space)}</p></li>` : ""}
+      ${f.vision ? `<li><h3>Smart farming vision</h3><p>${esc(f.vision)}</p></li>` : ""}
+      ${f.story ? `<li><h3>Farm story</h3><p>${esc(f.story)}</p></li>` : ""}
     </ol>
     ${digital ? `<section><h2 class="sec-title">Digital presence</h2>${digital}</section>` : ""}
     <section class="register">
@@ -722,7 +726,7 @@
 
     if (current === "people") {
       const people = supportPeople(farm).map((p) => {
-        const link = p.id && p.role === "Farmer" ? href("farmer/" + p.id)
+        const link = p.id && (p.role === "Farmer" || p.role === "Agri-entrepreneur") ? href("farmer/" + p.id)
           : p.id && p.role === "Agent" ? href("agent/" + p.id)
           : p.id && p.role === "Team" ? href("team/" + p.id)
           : null;
@@ -781,8 +785,7 @@
       <h1>Activity</h1>
       <p>Field activities appear only when a record exists. None are authored in this book.</p>
     </div></section>
-      ${rows ? `${filtersBar(params)}<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
-      ${pager("activity", slice, params)}`;
+      ${rows ? `${filtersBar(params)}<div class="table-wrap"><table class="data"><thead><tr><th>Date</th><th>Activity</th><th>Farm</th><th>Agent</th><th>AC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>${pager("activity", slice, params)}` : empty("No field activities yet", "Activities are authored records. Media does not create an activity.")}`;
   }
 
   function viewMedia() {

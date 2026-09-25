@@ -98,35 +98,6 @@
     return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
-  function mulberry(seed) {
-    let a = seed >>> 0;
-    return function () {
-      a += 0x6d2b79f5;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
-  function pick(rng, arr) {
-    return arr[Math.floor(rng() * arr.length)];
-  }
-
-  function pad(n, w) {
-    return String(n).padStart(w, "0");
-  }
-
-  function dateBetween(rng, start, end) {
-    const a = start.getTime();
-    const b = end.getTime();
-    return new Date(a + rng() * (b - a));
-  }
-
-  function fmtDate(d) {
-    return d.toISOString().slice(0, 10);
-  }
-
   const teamByDistrict = {};
   TEAMS.forEach((t) => t.districts.forEach((d) => { teamByDistrict[d] = t.id; }));
 
@@ -148,7 +119,6 @@
   const TARGET_FARMS = 5000;
   const TARGET_PER_AC = 20;
   const DEMO_BOOK = { farmers: 360, farms: 413, agents: 120 };
-  const CROPS = ["Paddy", "Vegetables", "Mustard", "Jute", "Integrated pond", "Banana", "Pulses"];
 
   const agents = [];
 
@@ -166,6 +136,10 @@
       agentId: null,
       village: null,
       farmIds: ["pikas-garden"],
+      practice: null,
+      space: null,
+      vision: null,
+      story: null,
       digital: [
         { network: "YouTube", handle: "Pika's Gardening", url: "https://www.youtube.com/@PikasGardening" },
         { network: "Facebook", handle: "Facebook reel", url: "https://www.facebook.com/reel/2557686798080686" },
@@ -184,6 +158,10 @@
       agentId: null,
       village: null,
       farmIds: ["rupali-garden"],
+      practice: null,
+      space: null,
+      vision: null,
+      story: null,
       digital: [
         { network: "YouTube", handle: "Rupali Garden", url: "https://www.youtube.com/@RupaliGarden" },
       ],
@@ -266,19 +244,22 @@
     },
   ];
 
+  /* Activity records are optional. Shape:
+     { id, type, date, title, farmId, farmerId, teamId, districtId, acId, status, mediaIds[] }
+     An activity may have zero or many media. Media never auto-creates an activity. */
   const activities = [];
 
   const MEDIA = [
-    { id: "med-hero", type: "photo", src: "images/hero.jpg", caption: "Hall from the stage", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "featured" },
-    { id: "med-banner", type: "photo", src: "images/banner.jpg", caption: "Programme banner", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
-    { id: "med-krl-mark", type: "photo", src: "images/g-krl-mark.jpg", caption: "KRL mark in the hall", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
-    { id: "med-press", type: "photo", src: "images/press-huddle.jpg", caption: "Press huddle", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
-    { id: "med-paddy", type: "photo", src: "images/field/paddy.jpg", caption: "Paddy cultivation", context: "Editorial field context — crop", category: "crop", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
-    { id: "med-pond", type: "photo", src: "images/field/pond.jpg", caption: "Farm pond", context: "Editorial field context — water", category: "water", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
-    { id: "med-visit", type: "photo", src: "images/field/visit.jpg", caption: "Field visit", context: "Editorial field context — community", category: "community", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
-    { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", caption: "Irrigation layout", context: "Editorial field context — irrigation", category: "irrigation", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
-    { id: "med-cta", type: "photo", src: "images/launch-wide.jpg", caption: "Launch hall", context: "KRL Media Connect", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "cta" },
-    { id: "med-session", type: "video", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/press-release-cover.jpg", caption: "Session film", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "link" },
+    { id: "med-hero", type: "photo", src: "images/hero.jpg", width: 1280, height: 960, source: "programme-archive", subject: "launch-hall", caption: "Hall from the stage", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "featured" },
+    { id: "med-banner", type: "photo", src: "images/banner.jpg", width: 1242, height: 813, source: "programme-archive", subject: "programme-banner", caption: "Programme banner", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-krl-mark", type: "photo", src: "images/g-krl-mark.jpg", width: 1280, height: 960, source: "programme-archive", subject: "krl-mark", caption: "KRL mark in the hall", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-press", type: "photo", src: "images/press-huddle.jpg", width: 1280, height: 720, source: "programme-archive", subject: "press", caption: "Press huddle", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "supporting" },
+    { id: "med-paddy", type: "photo", src: "images/field/paddy.jpg", width: 1280, height: 720, source: "editorial-library", subject: "paddy", caption: "Paddy cultivation", context: "Editorial field context — crop", category: "crop", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-pond", type: "photo", src: "images/field/pond.jpg", width: 1280, height: 720, source: "editorial-library", subject: "pond", caption: "Farm pond", context: "Editorial field context — water", category: "water", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-visit", type: "photo", src: "images/field/visit.jpg", width: 1280, height: 720, source: "editorial-library", subject: "field-visit", caption: "Field visit", context: "Editorial field context — community", category: "community", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-irrigation", type: "photo", src: "images/field/irrigation.jpg", width: 1280, height: 720, source: "editorial-library", subject: "irrigation", caption: "Irrigation layout", context: "Editorial field context — irrigation", category: "irrigation", date: null, relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "field" },
+    { id: "med-cta", type: "photo", src: "images/launch-wide.jpg", width: 1280, height: 960, source: "programme-archive", subject: "launch-hall", caption: "Launch hall", context: "KRL Media Connect", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "cta" },
+    { id: "med-session", type: "video", src: "https://youtu.be/cXO3fjWX-jg", poster: "images/archive/press-release-cover.jpg", width: null, height: null, source: "programme-archive", subject: "session-film", caption: "Session film", context: "Programme launch", category: "programme", date: "2026-09-14", relatedFarmId: null, relatedFarmerId: null, relatedTeamId: null, relatedActivityId: null, role: "editorial", placement: "link" },
   ];
 
   function byId(list, id) {
@@ -445,6 +426,11 @@
     });
   }
 
+  function mediaOfActivity(activity) {
+    const ids = (activity && activity.mediaIds) || [];
+    return ids.map((id) => mediaById(id)).filter(Boolean);
+  }
+
   global.KRL = {
     META: {
       launched: "2026-09-14",
@@ -468,10 +454,10 @@
     DEMO_BOOK,
     ACTIVITIES: activities,
     MEDIA,
-    CROPS,
     mediaById,
     mediaWhere,
     uniqueMedia,
+    mediaOfActivity,
     byId,
     farmersOf,
     farmsOfFarmer,
