@@ -224,7 +224,7 @@
     if (!people.length) return "";
     return `<section class="cinema-desk">
       <p class="label">Garden on camera · source media</p>
-      <p class="media-note">Public YouTube from named Model Farmers. Not programme archive. Instagram is not shown — no confirmed handle.</p>
+      <p class="media-note">Public YouTube from named agri-entrepreneurs. Not programme archive.</p>
       <div class="garden-cast">${people.map((f) => {
         const clip = sourceVideos(f)[0];
         const handles = digitalLinks(f).map((c) => `<a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.handle)}</a>`).join(" · ");
@@ -242,18 +242,24 @@
   function cinemaStage(person) {
     const videos = sourceVideos(person);
     if (!videos.length) return "";
-    const lead = videos[0];
-    const rest = videos.slice(1, 5);
+    const lead = videos.find((v) => v.role === "featured") || videos[0];
+    const rest = videos.filter((v) => v !== lead).slice(0, 4);
     return `<section class="cinema" id="garden-film">
-      <p class="label">Garden on camera · source media</p>
-      <div class="cinema-stage">
-        <iframe src="https://www.youtube.com/embed/${esc(lead.youtubeId)}?rel=0" title="${esc(lead.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+      <p class="label">Featured video · source media</p>
+      <div class="cinema-stage" data-embed="${esc(lead.youtubeId)}" data-title="${esc(lead.title)}">
+        <button type="button" class="cinema-play">
+          <img src="${ytThumb(lead.youtubeId)}" alt="">
+          <span>Play · ${esc(lead.title)}</span>
+        </button>
       </div>
       <p class="meta">${esc(lead.title)} · ${esc(lead.channel)}</p>
-      ${rest.length ? `<div class="film-strip">${rest.map((v) => `<a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">
-        <span class="film-still"><img src="${ytThumb(v.youtubeId)}" alt="${esc(v.title)}"></span>
+      ${rest.length ? `<div class="film-journey">
+        <p class="label">Watch the journey</p>
+        <div class="film-strip">${rest.map((v) => `<a href="${esc(v.url)}" target="_blank" rel="noopener noreferrer">
+        <span class="film-still"><img src="${ytThumb(v.youtubeId)}" alt="${esc(v.title)}" loading="lazy"></span>
         <span>${esc(v.title)}</span>
-      </a>`).join("")}</div>` : ""}
+      </a>`).join("")}</div>
+      </div>` : ""}
     </section>`;
   }
 
@@ -302,26 +308,25 @@
 
   function digitalDesk(person) {
     const channels = digitalLinks(person);
-    const videos = sourceVideos(person);
-    if (!channels.length && !videos.length) return "";
-    const yt = channels.find((c) => /youtube/i.test(c.network));
-    const fb = channels.find((c) => /facebook/i.test(c.network));
-    const extra = channels.filter((c) => c !== yt && c !== fb);
+    if (!channels.length) return "";
     return `<section class="digital-desk reveal" id="digital">
       <h2>Digital presence</h2>
-      <p class="media-note">Public source channels. Not treated as field-verified evidence. Instagram is not shown.</p>
+      <p class="media-note">Public source channels. Not treated as field-verified evidence.</p>
       <div class="digital-grid">
-        ${yt ? `<article class="digital-tile">
-          <p class="label">YouTube</p>
-          <a href="${esc(yt.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(yt.handle)}</strong></a>
-          ${videos[0] ? `<a class="story-still" href="${esc(videos[0].url)}" target="_blank" rel="noopener noreferrer"><img src="${ytThumb(videos[0].youtubeId)}" alt="${esc(videos[0].title)}"></a>` : ""}
-        </article>` : ""}
-        ${fb ? `<article class="digital-tile">
-          <p class="label">Facebook</p>
-          <a href="${esc(fb.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(fb.handle)}</strong></a>
-          <p class="meta">Known reel. No local still is stored for this post.</p>
-        </article>` : ""}
-        ${extra.map((c) => `<article class="digital-tile"><p class="label">${esc(c.network)}</p><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer"><strong>${esc(c.handle)}</strong></a></article>`).join("")}
+        ${channels.map((c) => {
+          const mark = /youtube/i.test(c.network) ? "YT" : /facebook/i.test(c.network) ? "FB" : /instagram/i.test(c.network) ? "IG" : "•";
+          const action = /youtube/i.test(c.network) ? "Watch channel" : "Visit";
+          const thumb = c.thumbYoutubeId
+            ? `<a class="story-still" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer"><img src="${ytThumb(c.thumbYoutubeId)}" alt="${esc(c.handle)} channel still"></a>`
+            : "";
+          return `<article class="digital-tile">
+            <p class="plat"><span class="plat-mark" aria-hidden="true">${mark}</span> ${esc(c.network)}</p>
+            <p class="plat-id">${esc(c.handle)}</p>
+            ${c.note ? `<p class="meta">${esc(c.note)}</p>` : ""}
+            ${thumb}
+            <p class="story-links"><a class="btn" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${action}</a></p>
+          </article>`;
+        }).join("")}
       </div>
     </section>`;
   }
@@ -331,23 +336,26 @@
     const team = assignedTeam(person);
     const zone = teamZone(team);
     const clip = sourceVideos(person)[0];
-    const channels = digitalLinks(person);
+    const portrait = person.profileImage;
+    const visual = portrait || (clip ? { src: ytThumb(clip.youtubeId), caption: "Source film · " + clip.title + ". Not a field portrait." } : null);
     return `<section class="player"${team ? ` style="--accent:${esc(team.accent)}"` : ""}>
-      ${clip ? `<figure class="player-still">
-        <img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}">
-        <figcaption>Source film · ${esc(clip.title)}. Not a field portrait.</figcaption>
+      ${visual ? `<figure class="player-still">
+        <img src="${esc(visual.src)}" alt="${esc(visual.caption || person.name)}">
+        <figcaption>${esc(visual.caption || "Source film. Not a field portrait.")}</figcaption>
       </figure>` : ""}
       <div class="player-copy">
-        <p class="label">Model Farmer</p>
+        <p class="label">Agri-entrepreneur</p>
         <h1>${esc(person.name)}</h1>
         ${person.gardenName ? `<p class="player-garden">${esc(person.gardenName)}</p>` : ""}
         ${farmerChain(person, farm)}
-        ${team ? `<div class="player-team">${teamIdentity(team, zone ? zone.name : teamRegion(team))}</div>` : ""}
+        ${team ? `<div class="player-team">
+          ${teamIdentity(team, zone ? zone.name : teamRegion(team))}
+          <p class="story-links"><a href="${href("team/" + team.id)}">Explore team</a></p>
+        </div>` : ""}
         ${teamNote(person) ? `<p class="meta">${esc(teamNote(person))}</p>` : ""}
-        ${channels.length ? `<ul class="presence">${channels.map((c) => `<li><a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${esc(c.network)} · ${esc(c.handle)}</a></li>`).join("")}</ul>` : ""}
         <p class="story-links">
-          ${farm ? `<a class="btn" href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}
-          ${clip ? `<button type="button" class="btn ghost" data-jump="garden-film">Watch garden</button>` : ""}
+          ${farm ? `<a class="btn" href="${href("farm/" + farm.id)}">Explore farm</a>` : ""}
+          ${clip ? `<button type="button" class="btn ghost" data-jump="garden-film">Watch story</button>` : ""}
         </p>
       </div>
     </section>`;
@@ -373,6 +381,85 @@
       <h2>${esc(title)}</h2>
       <div class="squad-grid">${people.map(squadCard).join("")}</div>
     </section>`;
+  }
+
+  function growChips(items) {
+    if (!items || !items.length) return "";
+    return `<ul class="grow-list">${items.map((g) => `<li>${esc(g.name)}</li>`).join("")}</ul>`;
+  }
+
+  function featuredEntrepreneurs() {
+    const cases = D.FARMERS.filter((f) => f.kind === "case-study");
+    if (!cases.length) return "";
+    const cards = cases.map((person) => {
+      const farm = D.byId(D.FARMS, person.farmIds[0]);
+      const team = assignedTeam(person);
+      const zone = teamZone(team);
+      const clip = sourceVideos(person)[0];
+      const channels = digitalLinks(person).map((c) => esc(c.network)).join(" · ");
+      const visual = person.profileImage || (clip ? { src: ytThumb(clip.youtubeId), caption: clip.title } : null);
+      return `<article class="feat reveal">
+        ${visual ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${esc(visual.src)}" alt="${esc(visual.caption || person.name)}"></a>` : ""}
+        <p class="label">${person.id === "amit-shill" ? "Primary case" : "Secondary case"}</p>
+        <h3><a href="${href("farmer/" + person.id)}">${esc(person.name)}</a></h3>
+        ${person.gardenName ? `<p class="story-garden">${esc(person.gardenName)}</p>` : ""}
+        ${farmerChain(person, farm)}
+        ${team ? teamIdentity(team, zone ? zone.name : "") : ""}
+        ${person.identity ? `<p class="feat-line">${esc(person.identity)}</p>` : person.practice ? `<p class="feat-line">${esc(person.practice)}</p>` : ""}
+        ${channels ? `<p class="meta">Digital presence · ${channels}</p>` : ""}
+        <p class="story-links"><a class="btn" href="${href("farmer/" + person.id)}">Open story</a>${farm ? `<a href="${href("farm/" + farm.id)}">Explore farm</a>` : ""}</p>
+      </article>`;
+    }).join("");
+    return `<section class="feat-band">
+      <header class="sec-head">
+        <p class="sec-k">People first</p>
+        <h2>Featured agri-entrepreneurs</h2>
+        <p>Named people, named gardens, public source media. Not enrolment counts.</p>
+      </header>
+      <div class="feat-grid">${cards}</div>
+    </section>`;
+  }
+
+  function networkModel() {
+    const steps = [
+      { k: "01", t: "Farmer", d: "A named agri-entrepreneur. The person is not the holding." },
+      { k: "02", t: "Farm", d: "A named garden. Size and yield stay hidden until evidenced." },
+      { k: "03", t: "Team", d: "An official KRL identity. Geography or named assignment, not a fake slot." },
+      { k: "04", t: "Geography", d: "West Bengal to district to assembly seat. The operating system." },
+      { k: "05", t: "Data", d: "Show what we know. Hide what we do not. Farm 360 is data-gated." },
+      { k: "06", t: "Intelligence", d: "Future intelligence layer. Programme architecture, not a live claim." },
+    ];
+    return `<section class="network-model reveal">
+      <header class="sec-head">
+        <p class="sec-k">Network model</p>
+        <h2>From farm to network</h2>
+        <p>The programme architecture. Not every layer is operational.</p>
+      </header>
+      <ol class="network-rail">${steps.map((s) => `<li><b>${s.k}</b><strong>${esc(s.t)}</strong><span>${esc(s.d)}</span></li>`).join("")}</ol>
+    </section>`;
+  }
+
+  function bootHeroLogo() {
+    const video = document.getElementById("krl-hero-logo");
+    const brand = document.querySelector(".arena-brand");
+    if (!video || !brand) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      brand.classList.add("is-static");
+      video.removeAttribute("autoplay");
+      video.pause();
+      return;
+    }
+    video.muted = true;
+    video.setAttribute("playsinline", "");
+    video.addEventListener("playing", function () {
+      brand.classList.add("is-live");
+    }, { once: true });
+    const play = video.play();
+    if (play && play.catch) play.catch(function () { brand.classList.add("is-static"); });
+    video.addEventListener("ended", function () {
+      brand.classList.add("is-settled");
+    }, { once: true });
   }
 
   function dash(v) {
@@ -503,23 +590,6 @@
     setNav("command");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
     const s = D.programmeStats();
-    const cases = D.FARMERS.filter((f) => f.kind === "case-study");
-    const caseStories = cases.map((person) => {
-      const farm = D.byId(D.FARMS, person.farmIds[0]);
-      const place = placeLine(person, false);
-      const channels = digitalLinks(person).map((c) => esc(c.network)).join(" · ");
-      const clip = sourceVideos(person)[0];
-      return `<article class="story reveal">
-        ${clip ? `<a class="story-still" href="${href("farmer/" + person.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a>` : ""}
-        <h2>${esc(person.name)}</h2>
-        <p class="story-garden">${esc(person.gardenName || (farm && farm.name) || "")}</p>
-        ${farmerChain(person, farm)}
-        ${place ? `<p class="meta">${esc(place)}</p>` : ""}
-        ${person.practice ? `<p class="meta">${esc(person.practice)}</p>` : ""}
-        ${channels ? `<p class="meta">Digital presence · ${channels}</p>` : ""}
-        <p class="story-links"><a class="btn" href="${href("farmer/" + person.id)}">Open case study</a>${farm ? `<a href="${href("farm/" + farm.id)}">Farm 360</a>` : ""}</p>
-      </article>`;
-    }).join("");
     const crests = D.TEAMS.map((t) => `<a class="crest" href="${href("team/" + t.id)}"><img src="${esc(t.logo)}" alt="${esc(t.name)}"><b>${esc(t.short)}</b></a>`).join("");
     const fan = D.TEAMS.map((t) => {
       const zone = teamZone(t);
@@ -540,23 +610,32 @@
 
     return `<div data-motion="command">
       <section class="arena">
-        <div class="arena-copy">
-          <p class="label">Krishi Ratna League</p>
-          <h1>The field is the farm.<br>The farmer is the champion.</h1>
-          <p class="lede">A fifteen-team network for West Bengal. Named gardens are on camera. Geography is the operating system. Farm 360 opens only where a holding is known.</p>
-          <div class="arena-cta">
-            <a class="btn" href="${href("teams")}">Open teams</a>
-            <a class="btn ghost" href="${href("farmer/amit-shill")}">Watch gardens</a>
-          </div>
-        </div>
-        <figure class="arena-film" aria-hidden="true">
-          <div class="arena-slides">
-            <img src="images/campaign/your-league.jpg" alt="">
-            <img src="images/campaign/scoreboard.jpg" alt="">
-            <img src="images/campaign/field-league.jpg" alt="">
-            <img src="images/campaign/pavilion.jpg" alt="">
-          </div>
+        <figure class="arena-brand">
+          <img class="arena-poster" src="video/krl-animated-logo-poster.jpg" width="1280" height="720" alt="Krishi Ratna League Bengal mark">
+          <video id="krl-hero-logo" class="arena-logo" muted playsinline preload="metadata" poster="video/krl-animated-logo-poster.jpg" aria-label="KRL animated brand mark">
+            <source src="video/krl-animated-logo.webm" type="video/webm">
+            <source src="video/krl-animated-logo.mp4" type="video/mp4">
+          </video>
         </figure>
+        <div class="arena-body">
+          <div class="arena-copy">
+            <p class="label">KRL Teams</p>
+            <h1>The field is the farm.<br>The farmer is the champion.</h1>
+            <p class="lede">From people and farms to a connected agricultural network. Named gardens are on camera. Geography is the operating system. Farm 360 opens only where a holding is known.</p>
+            <div class="arena-cta">
+              <a class="btn" href="${href("teams")}">Open teams</a>
+              <a class="btn ghost" href="${href("farmers")}">Meet agri-entrepreneurs</a>
+            </div>
+          </div>
+          <figure class="arena-film" aria-hidden="true">
+            <div class="arena-slides">
+              <img src="images/campaign/your-league.jpg" alt="">
+              <img src="images/campaign/scoreboard.jpg" alt="">
+              <img src="images/campaign/field-league.jpg" alt="">
+              <img src="images/campaign/pavilion.jpg" alt="">
+            </div>
+          </figure>
+        </div>
       </section>
       <div class="crest-marquee" aria-label="Official teams">
         <div class="crest-track">${crests}${crests}</div>
@@ -567,13 +646,8 @@
         <div><b>${s.targetFarmers.toLocaleString("en-IN")}</b><span>Programme target, not enrolment</span></div>
       </section>
       <section class="axis-grid">${axes}</section>
-      <section class="case-band">
-        <header class="sec-head">
-          <h2>Gardens on camera</h2>
-          <p>Source YouTube from named Model Farmers. Instagram is not shown.</p>
-        </header>
-        <div class="story-split">${caseStories}</div>
-      </section>
+      ${featuredEntrepreneurs()}
+      ${networkModel()}
       <section class="fan-wrap reveal">
         <h2>Fifteen crests</h2>
         <div class="fan-row">${fan}</div>
@@ -918,24 +992,32 @@
     if (zone) whereBits.push(`<a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>`);
     if (team) whereBits.push(`<a href="${href("team/" + team.id)}">${esc(team.name)}</a>`);
     whereBits.push("West Bengal");
+    const grow = f.whatTheyGrow || [];
+    const does = f.whatTheyDo || [];
+    const story = f.story && f.story.text ? f.story : null;
+    const space = f.farmSpace || f.space;
+    const vision = f.smartFarmingVision || f.vision;
     return `<div data-motion="page">
       ${playerHero(f)}
       <section class="story-chapters">
         <article class="reveal">
-          <h2>The entrepreneur</h2>
-          <p>${esc(f.name)} is a named Model Farmer. The record stays with the person, not the holding.</p>
+          <h2>Identity</h2>
+          <p>${esc(f.identity || (f.name + " is a named agri-entrepreneur. The record stays with the person, not the holding."))}</p>
         </article>
         <article class="reveal">
           <h2>The farm</h2>
-          <p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")} is the known garden. Size, yield and plots stay hidden until evidenced.</p>
+          <p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")} is the known garden.</p>
+          ${grow.length ? `<p class="meta">What they grow</p>${growChips(grow)}` : ""}
+          ${does.length ? `<p class="meta">What they do</p>${growChips(does)}` : ""}
+          ${!grow.length && !does.length ? `<p>Size, yield and plots stay hidden until evidenced.</p>` : ""}
         </article>
         ${whereBits.length ? `<article class="reveal"><h2>The geography</h2><p>${whereBits.join(" · ")}</p></article>` : ""}
         ${team ? `<article class="reveal"><h2>The team</h2><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${zone ? ` · <a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>` : ""}. ${esc(teamNote(f))}</p></article>` : ""}
         ${f.practice ? `<article class="reveal"><h2>The practice</h2><p>${esc(f.practice)}</p></article>` : ""}
-        ${f.space ? `<article class="reveal"><h2>The farm space</h2><p>${esc(f.space)}</p></article>` : ""}
-        ${f.vision ? `<article class="reveal"><h2>The vision</h2><p>${esc(f.vision)}</p></article>` : ""}
-        ${f.story ? `<article class="reveal"><h2>The journey</h2><p>${esc(f.story)}</p></article>` : ""}
-        ${f.farmIds[0] ? `<article class="reveal"><h2>The Farm 360</h2><p><a href="${href("farm/" + f.farmIds[0])}">Open the holding record</a> for people, source channels and what is known.</p></article>` : ""}
+        ${space ? `<article class="reveal"><h2>Farm space</h2><p>${esc(space)}</p></article>` : ""}
+        ${story ? `<article class="reveal"><h2>Agri-entrepreneur story</h2><p>${esc(story.text)}</p></article>` : ""}
+        ${vision ? `<article class="reveal"><h2>Smart farming vision</h2><p>${esc(typeof vision === "string" ? vision : vision.text)}</p></article>` : ""}
+        ${f.farmIds[0] ? `<article class="reveal"><h2>Farm 360</h2><p><a href="${href("farm/" + f.farmIds[0])}">Open the holding record</a> for people, source channels and what is known.</p></article>` : ""}
       </section>
       ${cinemaStage(f)}
       ${digitalDesk(f)}
@@ -1001,12 +1083,14 @@
     return `<section class="dossier${visual || clip ? "" : " dossier-plain"}">
       ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : clip ? `<figure class="dossier-visual"><a class="story-still" href="${href("farmer/" + farmer.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a></figure>` : ""}
       <div>
-        <p class="label">${farm.kind === "case-study" ? "Farm 360 · Model Farmer holding" : "Farm 360"}</p>
+        <p class="label">${farm.kind === "case-study" ? "Farm 360 · agri-entrepreneur holding" : "Farm 360"}</p>
         <h1>${esc(farm.name)}</h1>
+        ${farmer ? `<p class="player-garden"><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></p>` : ""}
         ${farmerChain(farmer, farm)}
         ${place ? `<p class="meta">${esc(place)}</p>` : ""}
         ${team ? teamIdentity(team, zone ? zone.name : "") : ""}
         ${farmer ? `<p class="meta">${esc(teamNote(farmer))}</p>` : ""}
+        <p class="story-links">${farmer ? `<a class="btn" href="${href("farmer/" + farmer.id)}">Explore entrepreneur</a>` : ""}</p>
         <dl class="dossier-meta">
           <div><dt>Who</dt><dd><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></dd></div>
           ${place ? `<div><dt>Where</dt><dd>${esc(place)}</dd></div>` : ""}
@@ -1069,7 +1153,8 @@
         const media = e.type === "video"
           ? `<video controls playsinline preload="metadata" poster="${esc(e.poster || "images/g-krl-mark.jpg")}"><source src="${esc(e.src)}" type="video/mp4"></video>`
           : `<img src="${esc(e.src)}" alt="${esc(e.title)}">`;
-        return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(captionFor(e.type, e.title))} · ${esc(farm.name)} · ${esc(e.date)}</figcaption></figure>`;
+        const cap = [e.caption || captionFor(e.type, e.title), farm.name, e.attribution].filter(Boolean).join(" · ");
+        return `<figure class="${i === 0 ? "wide" : ""}">${media}<figcaption>${esc(cap)}</figcaption></figure>`;
       }).join("");
       const ba = farm.beforeAfter
         ? `<h2 style="margin:22px 0 12px;font-size:18px">Field sequence</h2><div class="ba">
@@ -1108,7 +1193,8 @@
         ${where ? `<li><h3>Where</h3><p>${esc(where)}</p></li>` : ""}
         <li><h3>Farm / garden</h3><p>${esc(farm.name)}</p></li>
         ${farmTeam ? `<li><h3>Team</h3><p><a href="${href("team/" + farmTeam.id)}">${esc(farmTeam.name)}</a></p></li>` : ""}
-        ${farm.sizeAcres != null || farm.crop ? `<li><h3>What they grow / do</h3><p>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</p></li>` : ""}
+        ${farmer && (farmer.whatTheyGrow || []).length ? `<li><h3>What they grow</h3>${growChips(farmer.whatTheyGrow)}</li>` : farm.sizeAcres != null || farm.crop ? `<li><h3>What they grow / do</h3><p>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</p></li>` : ""}
+        ${farmer && (farmer.whatTheyDo || []).length ? `<li><h3>What they do</h3>${growChips(farmer.whatTheyDo)}</li>` : ""}
         ${allowed.includes("people") ? `<li><h3>People</h3><p><a href="${href("farm/" + farm.id + "/people")}">Support network</a></p></li>` : ""}
         ${allowed.includes("social") ? `<li><h3>Digital presence</h3><p><a href="${href("farm/" + farm.id + "/social")}">Source channels</a></p></li>` : ""}
       </ol>
@@ -1208,6 +1294,7 @@
         <div><dt>Official teams</dt><dd>${s.teams}</dd></div>
         <div><dt>Programme target</dt><dd>${s.targetFarmers.toLocaleString("en-IN")}</dd></div>
       </dl>
+      ${networkModel()}
       <div class="table-wrap" style="margin-top:18px"><table class="data"><thead><tr><th>Team</th><th>Farmers</th><th>Farms</th><th>ACs</th><th>Agents</th></tr></thead><tbody>${teamRows}</tbody></table></div>`;
   }
 
@@ -1252,6 +1339,7 @@
     if (h) h.setAttribute("tabindex", "-1");
     if (h && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) h.focus({ preventScroll: true });
     if (window.KRLMotion) window.KRLMotion.boot();
+    bootHeroLogo();
   }
 
   function openSearch() {
@@ -1383,6 +1471,12 @@
     if (jump) {
       const el = document.getElementById(jump.getAttribute("data-jump"));
       if (el) el.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    }
+    const stage = e.target.closest("[data-embed]");
+    if (stage && !stage.querySelector("iframe")) {
+      const id = stage.getAttribute("data-embed");
+      const title = stage.getAttribute("data-title") || "Garden film";
+      stage.innerHTML = `<iframe src="https://www.youtube.com/embed/${esc(id)}?rel=0&autoplay=1" title="${esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
     }
   });
   window.addEventListener("hashchange", render);
