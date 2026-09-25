@@ -157,7 +157,7 @@ Repository: `BKS-Bengal/krl-teams`.
 
 KRL Media Connect (`prj_Z7tnzctmKOSWiHyc6owqAsPhWMv5`, https://krl-media-connect.vercel.app/) was not opened for write and was not merged.
 
-Production URL to inspect after this deploy: https://krl-teams.vercel.app/
+Production inspected at https://krl-teams.vercel.app/ after deploy `dpl_E4Piaajne3oPi5hWsT3v3s5tepBc` (commit `291760b`). Command, Teams and Media match the local architecture: 15 official teams, no reserved slots, one known farm, unique media srcs, Media Connect CTA intact.
 
 Local smoke (pre-deploy) checklist:
 
@@ -176,11 +176,17 @@ Local smoke (pre-deploy) checklist:
 
 ## 14. Git commit
 
-See the commit created for this architecture pass on `BKS-Bengal/krl-teams`.
+`291760b94c8693ae52c8b960021ee41e66eb4e75` on `BKS-Bengal/krl-teams` (`master`).
+
+Message: Stop minting demo farms and stop reusing one field photo as many events.
 
 ## 15. Vercel deployment
 
-Production deploy is targeted at project `krl-teams` only. Media Connect remains a separate project and repository.
+Production deploy `dpl_E4Piaajne3oPi5hWsT3v3s5tepBc` on project `krl-teams` (`prj_RM0HeVzqHGR3DDKUaqy28l5syQnP`) is READY.
+
+Aliases include https://krl-teams.vercel.app/
+
+Media Connect (`prj_Z7tnzctmKOSWiHyc6owqAsPhWMv5`) was not written to and remains a separate repository and deployment.
 
 ## 16. Remaining limitations
 
