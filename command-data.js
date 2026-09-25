@@ -49,21 +49,21 @@
   ];
 
   const TEAMS = [
-    { id: "himalayan-giants", name: "Himalayan Giants", short: "HG", accent: "#3d5278", districts: ["darjeeling", "kalimpong"] },
-    { id: "terai-tuskers", name: "Terai Tuskers", short: "TT", accent: "#5a4a32", districts: ["jalpaiguri", "alipurduar", "uttar-dinajpur"] },
-    { id: "cooch-behar-royals", name: "Cooch Behar Royals", short: "CR", accent: "#6b3a4a", districts: ["cooch-behar"] },
-    { id: "dinajpur-defenders", name: "Dinajpur Defenders", short: "DD", accent: "#3a5a48", districts: ["dakshin-dinajpur"] },
-    { id: "malda-kings", name: "Malda Kings", short: "MK", accent: "#7a5a20", districts: ["malda"] },
-    { id: "murshidabad-nawabs", name: "Murshidabad Nawabs", short: "MN", accent: "#4a3a5c", districts: ["murshidabad"] },
-    { id: "nadia-warriors", name: "Nadia Warriors", short: "NW", accent: "#2f5a4a", districts: ["nadia"] },
-    { id: "bardhaman-bigha-kings", name: "Bardhaman Bigha Kings", short: "BK", accent: "#6a4a28", districts: ["purba-bardhaman", "paschim-bardhaman"] },
-    { id: "hooghly-harits", name: "Hooghly Harits", short: "HH", accent: "#3d6a38", districts: ["hooghly"] },
-    { id: "birbhum-blasters", name: "Birbhum Blasters", short: "BB", accent: "#6a3a28", districts: ["birbhum"] },
-    { id: "bankura-bulls", name: "Bankura Bulls", short: "BU", accent: "#4a4030", districts: ["bankura"] },
-    { id: "purulia-panthers", name: "Purulia Panthers", short: "PP", accent: "#3a3a48", districts: ["purulia"] },
-    { id: "medinipur-mavericks", name: "Medinipur Mavericks", short: "MM", accent: "#2a4a5c", districts: ["jhargram", "paschim-medinipur", "purba-medinipur"] },
-    { id: "ganga-gladiators", name: "Ganga Gladiators", short: "GG", accent: "#2a3a6c", districts: ["howrah", "kolkata"] },
-    { id: "sundarban-strikers", name: "Sundarban Strikers", short: "SS", accent: "#2a5a50", districts: ["north-24-parganas", "south-24-parganas"] },
+    { id: "himalayan-giants", logo: "images/teams/himalayan-giants.png", name: "Himalayan Giants", short: "HG", accent: "#3d5278", districts: ["darjeeling", "kalimpong"] },
+    { id: "terai-tuskers", logo: "images/teams/terai-tuskers.png", name: "Terai Tuskers", short: "TT", accent: "#5a4a32", districts: ["jalpaiguri", "alipurduar", "uttar-dinajpur"] },
+    { id: "cooch-behar-royals", logo: "images/teams/cooch-behar-royals.png", name: "Cooch Behar Royals", short: "CR", accent: "#6b3a4a", districts: ["cooch-behar"] },
+    { id: "dinajpur-defenders", logo: "images/teams/dinajpur-defenders.png", name: "Dinajpur Defenders", short: "DD", accent: "#3a5a48", districts: ["dakshin-dinajpur"] },
+    { id: "malda-kings", logo: "images/teams/malda-kings.png", name: "Malda Kings", short: "MK", accent: "#7a5a20", districts: ["malda"] },
+    { id: "murshidabad-nawabs", logo: "images/teams/murshidabad-nawabs.png", name: "Murshidabad Nawabs", short: "MN", accent: "#4a3a5c", districts: ["murshidabad"] },
+    { id: "nadia-warriors", logo: "images/teams/nadia-warriors.png", name: "Nadia Warriors", short: "NW", accent: "#2f5a4a", districts: ["nadia"] },
+    { id: "bardhaman-bigha-kings", logo: "images/teams/bardhaman-bigha-kings.png", name: "Bardhaman Bigha Kings", short: "BK", accent: "#6a4a28", districts: ["purba-bardhaman", "paschim-bardhaman"] },
+    { id: "hooghly-harits", logo: "images/teams/hooghly-harits.png", name: "Hooghly Harits", short: "HH", accent: "#3d6a38", districts: ["hooghly"] },
+    { id: "birbhum-blasters", logo: "images/teams/birbhum-blasters.png", name: "Birbhum Blasters", short: "BB", accent: "#6a3a28", districts: ["birbhum"] },
+    { id: "bankura-bulls", logo: "images/teams/bankura-bulls.png", name: "Bankura Bulls", short: "BU", accent: "#4a4030", districts: ["bankura"] },
+    { id: "purulia-panthers", logo: "images/teams/purulia-panthers.png", name: "Purulia Panthers", short: "PP", accent: "#3a3a48", districts: ["purulia"] },
+    { id: "medinipur-mavericks", logo: "images/teams/medinipur-mavericks.png", name: "Medinipur Mavericks", short: "MM", accent: "#2a4a5c", districts: ["jhargram", "paschim-medinipur", "purba-medinipur"] },
+    { id: "ganga-gladiators", logo: "images/teams/ganga-gladiators.png", name: "Ganga Gladiators", short: "GG", accent: "#2a3a6c", districts: ["howrah", "kolkata"] },
+    { id: "sundarban-strikers", logo: "images/teams/sundarban-strikers.png", name: "Sundarban Strikers", short: "SS", accent: "#2a5a50", districts: ["north-24-parganas", "south-24-parganas"] },
   ];
 
   const RESERVED_TEAMS = [16, 17, 18, 19, 20].map((n) => ({

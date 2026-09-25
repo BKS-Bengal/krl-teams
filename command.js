@@ -21,7 +21,7 @@
       activity: "Activity",
       media: "Media",
       reports: "Reports",
-      essay: "Media Connect",
+      product: "PK Bengal",
     },
     bn: {
       notice: "ইন্টারফেস পরীক্ষার প্রোটোটাইপ খাতা. চালু কর্মসূচির পরিসংখ্যান নয়.",
@@ -35,7 +35,7 @@
       activity: "কাজ",
       media: "মিডিয়া",
       reports: "প্রতিবেদন",
-      essay: "মিডিয়া সংযোগ",
+      product: "পি কে বেঙ্গল",
     },
   };
 
@@ -117,6 +117,40 @@
     return (team.districts || []).map((id) => nameOf("district", id)).join(", ");
   }
 
+
+  function teamMark(team) {
+    if (!team || team.placeholder || !team.logo) {
+      return '<span class="crest-void" aria-hidden="true"></span>';
+    }
+    return '<img src="' + esc(team.logo) + '" alt="' + esc(team.name) + ' official mark">';
+  }
+
+  function teamCard(t) {
+    const st = D.teamStats(t.id);
+    return '<a class="crest-card" href="' + href("team/" + t.id) + '">' +
+      teamMark(t) +
+      "<strong>" + esc(t.name) + "</strong>" +
+      '<span class="crest-geo">' + esc(teamRegion(t)) + "</span>" +
+      '<span class="crest-ops">' + st.agents + " agents · " + st.farmers + " farmers · " + st.farms + " farms</span>" +
+      '<span class="crest-sig">' + st.progress + "% implementation · demo book</span></a>";
+  }
+
+  function reservedCard(t) {
+    return '<div class="crest-card pending">' +
+      '<span class="crest-void" aria-hidden="true"></span>' +
+      "<strong>Identity pending</strong>" +
+      '<span class="crest-geo">Slot ' + t.slot + " of 20</span>" +
+      '<span class="crest-ops">No official mark issued</span></div>';
+  }
+
+  function leagueBoard(page) {
+    const cards = D.TEAMS.map(teamCard).join("") + D.RESERVED_TEAMS.map(reservedCard).join("");
+    return '<section class="' + (page ? "league page-league" : "league") + '">' +
+      '<header class="sec-head"><p class="sec-k">Programme league</p><h2>Team Register</h2>' +
+      "<p>Fifteen official identities from the issued team sheet. Five reserved slots remain unused until official marks exist. Counts below are prototype book volumes, not live enrolment.</p></header>" +
+      '<div class="crest-grid">' + cards + "</div></section>";
+  }
+
   function setNav(active) {
     document.querySelectorAll(".subnav a").forEach((a) => {
       const on = a.dataset.nav === active;
@@ -186,12 +220,7 @@
         : `<div class="ph">No media</div>`;
       return `<article class="act"><a href="${href("farm/" + a.farmId)}">${media}<div class="act-body"><strong>${esc(a.title)}</strong><p>Demo media · ${esc(farm ? farm.name : "")} · ${esc(agent ? agent.code : "")} · ${esc(a.date)}</p></div></a></article>`;
     }).join("");
-    const register = D.TEAMS.map((t) => {
-      const st = D.teamStats(t.id);
-      return `<a class="reg-row" href="${href("team/" + t.id)}"><b>${esc(t.name)}</b><span>${esc(teamRegion(t))}</span><em>${st.farmers} farmers</em><em>${st.acsCovered}/${st.acs} AC</em></a>`;
-    }).join("") + D.RESERVED_TEAMS.map((t) =>
-      `<div class="reg-row hold"><b>Identity pending</b><span>Slot ${t.slot} of 20</span><em>—</em><em>—</em></div>`
-    ).join("");
+    const register = leagueBoard(false);
 
     return `
       <header class="mast">
@@ -229,10 +258,7 @@
         <h2 class="sec-title">Current activity</h2>
         <div class="film">${acts || empty("No activity", "No prototype visits in range.")}</div>
       </section>
-      <section class="register">
-        <h2 class="sec-title">Teams</h2>
-        ${register}
-      </section>`;
+      ${register}`;
   }
 
   function wbMap() {
@@ -258,9 +284,9 @@
     setNav("geo");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Geography" }]);
     return `<section class="ident"><div>
-      <p class="mast-k">State frame</p>
+      <p class="mast-k">Programme Geographic View</p>
       <h1>Geography</h1>
-      <p>23 districts. ${D.ACS.length} assembly constituencies. District, then AC, then farm.</p>
+      <p>West Bengal to district to assembly constituency to the field network. This is a programme geographic view, not a cadastral map.</p>
     </div></section>
       ${wbMap()}`;
   }
@@ -331,18 +357,11 @@
   function viewTeams() {
     setNav("teams");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Teams" }]);
-    const rows = D.TEAMS.map((t) => {
-      const st = D.teamStats(t.id);
-      return `<a class="reg-row" href="${href("team/" + t.id)}"><b>${esc(t.name)}</b><span>${esc(teamRegion(t))}</span><em>${st.farmers} farmers</em><em>${st.acsCovered}/${st.acs} AC</em></a>`;
-    }).join("") + D.RESERVED_TEAMS.map((t) =>
-      `<div class="reg-row hold"><b>Identity pending</b><span>Slot ${t.slot} of 20</span><em>—</em><em>—</em></div>`
-    ).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Organisation</p>
       <h1>Teams</h1>
-      <p>Fifteen regional sides. Five slots remain unused until official identities exist.</p>
-    </div></section>
-      <div class="register">${rows}</div>`;
+      <p>Fifteen official identities. Five slots remain unused until official identities exist.</p>
+    </div></section>${leagueBoard(true)}`;
   }
 
   function viewTeam(id) {
@@ -369,7 +388,7 @@
       return `<article class="act"><a href="${href("farm/" + a.farmId)}">${a.photo ? `<img src="${esc(a.photo)}" alt="">` : `<div class="ph">No media</div>`}<div class="act-body"><strong>${esc(a.title)}</strong><p>${esc(farm ? farm.name : "")} · ${esc(a.date)}</p></div></a></article>`;
     }).join("");
     const districts = team.districts.map((did) => `<a href="${href("district/" + did)}">${esc(nameOf("district", did))}</a>`).join(" · ");
-    return `<section class="ident"><div>
+    return `<section class="ident ident-row">${teamMark(team)}<div>
       <p class="mast-k">Team</p>
       <h1>${esc(team.name)}</h1>
       <p>${districts}</p>
@@ -603,6 +622,7 @@
         </dl>
       </div>
       <div class="dossier-prog">
+        ${team && team.logo ? `<img class="dossier-crest" src="${esc(team.logo)}" alt="${esc(team.name)} official mark">` : ""}
         <b>${farm.progress}</b>
         <span>${esc(stageLabel(farm.stage))}<br>Path share, not yield</span>
       </div>
@@ -781,7 +801,7 @@
     const s = D.programmeStats();
     const teamRows = D.TEAMS.map((t) => {
       const st = D.teamStats(t.id);
-      return `<tr><td><a href="${href("team/" + t.id)}">${esc(t.name)}</a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.progress}%</td><td>${st.attention}</td></tr>`;
+      return `<tr><td><a class="team-cell" href="${href("team/" + t.id)}">${t.logo ? `<img src="${esc(t.logo)}" alt="">` : ""}<span>${esc(t.name)}</span></a></td><td>${st.farmers}</td><td>${st.farms}</td><td>${st.acsCovered}/${st.acs}</td><td>${st.progress}%</td><td>${st.attention}</td></tr>`;
     }).join("");
     return `<section class="ident"><div>
       <p class="mast-k">Operations</p>
