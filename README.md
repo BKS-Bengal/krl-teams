@@ -15,8 +15,8 @@ West Bengal → District → Assembly Constituency → Team → Agri-entrepreneu
 - 294 assembly constituencies
 
 ## Case studies
-- Amit Shill → Pikas Garden (Dakshin Dinajpur · 39 Balurghat)
-- Krishna Biswas → Rupali Garden (geography not yet recorded)
+- Amit Shill → Pikas Garden (Dakshin Dinajpur · 39 Balurghat). No confirmed team enrolment.
+- Krishna Biswas → Rupali Garden (Maynaguri). District, AC and team are not recorded.
 
 ## Run locally
 ```

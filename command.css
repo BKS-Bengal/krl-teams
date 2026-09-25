@@ -160,6 +160,9 @@ button{background:none;border:0;cursor:pointer}
 .ident-row{display:grid;grid-template-columns:88px 1fr;gap:18px;align-items:center}
 .ident-row img{width:88px;height:108px;object-fit:contain;background:var(--surface);border:1px solid var(--line)}
 .ident p{margin-top:8px;color:var(--mute)}
+.model-ident{padding:28px 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.model-ident .case-garden{margin:10px 0 6px;font-size:clamp(20px,2.4vw,28px);color:var(--field);font-weight:600;letter-spacing:-.02em}
+.model-ident .dossier-place{margin-top:0;font-size:16px}
 
 .filters{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px}
 .filters label{display:grid;gap:4px;font-size:11px;color:var(--mute)}

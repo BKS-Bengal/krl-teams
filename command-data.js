@@ -131,8 +131,8 @@
       gardenName: "Pikas Garden",
       districtId: "dakshin-dinajpur",
       acId: "dakshin-dinajpur-balurghat",
-      teamId: "dinajpur-defenders",
-      teamSource: "district-mapping",
+      teamId: null,
+      teamSource: null,
       agentId: null,
       village: null,
       farmIds: ["pikas-garden"],
@@ -156,7 +156,7 @@
       teamId: null,
       teamSource: null,
       agentId: null,
-      village: null,
+      village: "Maynaguri",
       farmIds: ["rupali-garden"],
       practice: null,
       space: null,
@@ -177,7 +177,7 @@
       districtId: "dakshin-dinajpur",
       acId: "dakshin-dinajpur-balurghat",
       village: null,
-      teamId: "dinajpur-defenders",
+      teamId: null,
       agentId: null,
       sizeAcres: null,
       crop: null,
@@ -192,7 +192,6 @@
       journey: [],
       support: [
         { role: "Agri-entrepreneur", name: "Amit Shill", id: "amit-shill" },
-        { role: "Team", name: "Dinajpur Defenders", id: "dinajpur-defenders" },
         { role: "Organisation", name: "Bharatiya Krishak Samaj West Bengal", id: null },
       ],
       social: {
@@ -214,7 +213,7 @@
       farmerId: "krishna-biswas",
       districtId: null,
       acId: null,
-      village: null,
+      village: "Maynaguri",
       teamId: null,
       agentId: null,
       sizeAcres: null,
@@ -230,6 +229,7 @@
       journey: [],
       support: [
         { role: "Agri-entrepreneur", name: "Krishna Biswas", id: "krishna-biswas" },
+        { role: "Organisation", name: "Bharatiya Krishak Samaj West Bengal", id: null },
       ],
       social: {
         public: true,
@@ -386,7 +386,7 @@
       if (a.code.toLowerCase().includes(s) || a.name.toLowerCase().includes(s)) out.push({ type: "agent", id: a.id, label: a.code + " · " + a.name });
     });
     farmers.forEach((f) => {
-      const hay = [f.name, f.gardenName, f.id, f.village].filter(Boolean).join(" ").toLowerCase();
+      const hay = [f.name, f.gardenName, f.id, f.village, f.place].filter(Boolean).join(" ").toLowerCase();
       if (hay.includes(s)) out.push({ type: "farmer", id: f.id, label: f.gardenName ? f.name + " · " + f.gardenName : f.name });
     });
     farms.forEach((f) => {
