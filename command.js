@@ -293,13 +293,15 @@
       const pct = Math.round((st.farmers / max) * 100);
       return `<a href="${href("district/" + d.id)}"><strong>${esc(d.name)}</strong><em>${st.farmers} · ${st.acsCovered}/${st.acs}</em><span class="dens" aria-hidden="true"><i style="width:${pct}%"></i></span></a>`;
     }).join("");
-    return `<div class="geo-stage">
-      <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
-      <div class="geo-marks">${marks}</div>
+    return `<div class="geo-frame">
+      <div class="geo-stage">
+        <img class="wb-base" src="images/wb-outline.svg" alt="West Bengal programme geographic view">
+        <div class="geo-marks">${marks}</div>
+      </div>
+      <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Indicated</span><span><b class="l-u"></b>Upcoming</span></p>
+      <p class="geo-note">Programme Geographic View. Not a cadastral map.</p>
     </div>
-    <p class="geo-legend"><span><b class="l-a"></b>Active</span><span><b class="l-i"></b>Indicated</span><span><b class="l-u"></b>Upcoming</span></p>
-    <p class="notice">Programme Geographic View. Not a cadastral map.</p>
-    ${withList === false ? "" : `<div class="geo-list" role="list">${rows}</div>`}`;
+    ${withList === false ? "" : `<aside class="geo-register"><h2 class="sec-title" style="margin-top:0">District register</h2><div class="geo-list" role="list">${rows}</div></aside>`}`;
   }
 
   function viewGeo(params) {
@@ -310,7 +312,7 @@
       <h1>Geography</h1>
       <p>West Bengal to district to assembly constituency to the field network. This is a programme geographic view, not a cadastral map.</p>
     </div></section>
-      ${wbMap(true)}`;
+      <div class="geo-page">${wbMap(true)}</div>`;
   }
 
   function viewDistrict(id) {
@@ -862,7 +864,7 @@
     const root = parts[0] || "";
     let html = "";
     if (!root) html = viewCommand();
-    else if (root === "geo") html = viewGeo(params);
+    else if (root === "geo" || root === "geography") html = viewGeo(params);
     else if (root === "district" && parts[1]) html = viewDistrict(parts[1]);
     else if (root === "ac" && parts[1]) html = viewAc(resolveAcId(parts[1]));
     else if (root === "teams") html = viewTeams();

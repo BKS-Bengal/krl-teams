@@ -83,11 +83,14 @@ button{background:none;border:0;cursor:pointer}
 .sec-head h2{font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-.03em}
 .sec-head p{margin-top:8px;color:var(--mute);max-width:46em}
 
-.geo-command{display:grid;grid-template-columns:minmax(280px,.95fr) 1.15fr;gap:28px;padding:22px 0;align-items:start}
-.geo-stage{position:relative;background:var(--paper);border:1px solid var(--line);min-height:420px}
-.wb-base{width:100%;height:auto;display:block}
-.geo-marks{position:absolute;inset:4% 8% 8% 10%}
-.geo-dot{position:absolute;width:11px;height:11px;border:2px solid var(--surface);transform:translate(-50%,-50%)}
+.geo-command{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:36px;padding:22px 0;align-items:start}
+.geo-page{display:grid;grid-template-columns:minmax(260px,420px) 1fr;gap:40px;align-items:start;padding:8px 0 20px}
+.geo-frame{max-width:420px}
+.geo-stage{position:relative;width:min(100%,calc(min(68vh,680px)*1382/2036));height:min(68vh,680px);background:var(--paper);border:1px solid var(--line)}
+.wb-base{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center}
+.geo-marks{position:absolute;inset:1.8% 12% 2.4% 13%}
+.geo-note{margin-top:8px;font-size:12px;color:var(--mute);max-width:36em}
+.geo-dot{position:absolute;width:12px;height:12px;border:2px solid var(--surface);box-shadow:0 0 0 1px rgba(42,38,31,.28);transform:translate(-50%,-50%)}
 .geo-dot.active{background:var(--field)}
 .geo-dot.indicated{background:var(--wheat)}
 .geo-dot.upcoming{background:#b7b0a2}
@@ -239,7 +242,8 @@ table.data a{color:var(--field);font-weight:600}
 .split-geo{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;margin-top:28px}
 
 @media(max-width:1100px){
-  .mast,.geo-command,.ops-split,.narrative,.dossier,.split-geo,.ident-row{grid-template-columns:1fr}
+  .mast,.geo-command,.geo-page,.ops-split,.narrative,.dossier,.split-geo,.ident-row{grid-template-columns:1fr}
+  .geo-frame,.geo-stage{margin-inline:auto}
   .journal{grid-template-columns:1fr 1fr}
   .scale{grid-template-columns:1fr 1fr}
   .ledger{grid-template-columns:1fr 1fr 1fr}
@@ -257,6 +261,6 @@ table.data a{color:var(--field);font-weight:600}
   .spine li{grid-template-columns:1fr;gap:4px}
   .field-bar{display:grid}
   .app{padding-bottom:108px}
-  .geo-stage{min-height:280px}
+  .geo-stage{height:min(62vh,520px);width:min(100%,calc(min(62vh,520px)*1382/2036))}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
