@@ -150,10 +150,10 @@
       identity: "Amit Shill is the named agri-entrepreneur for Pikas Garden. The person record stays distinct from the garden record.",
       story: {
         kind: "agri-entrepreneur-story",
-        text: "Amit Shill publishes garden practice from Pikas Garden on the public YouTube channel Pika's Gardening. Source films show plant care for adenium, tulsi, lemon, bougainvillea and lotus. This is an agri-entrepreneur story from public source media, not a measured success report.",
-        source: "Pika's Gardening YouTube",
+        text: "Amit Shill is the named agri-entrepreneur for Pikas Garden. He appears on the published Karmyog TV session film with Mahacharya Ji as an agricultural creator. On that recording he speaks to personal responsibility on the farm: if people take one percent initiative, others follow. His public YouTube channel, Pika's Gardening, shows garden-practice films — adenium, tulsi, lemon, bougainvillea, lotus. This is an agri-entrepreneur story from the session film and his own source channel. It is not a measured success report.",
+        source: "Karmyog TV session film · Pika's Gardening YouTube",
         sourceUrl: "https://www.youtube.com/@PikasGardening",
-        sourceType: "official-youtube",
+        sourceType: "session-film-and-official-youtube",
         verified: true,
       },
       whatTheyGrow: [
@@ -169,7 +169,7 @@
         { name: "Publishes garden-practice films", source: "Pika's Gardening YouTube", sourceUrl: "https://www.youtube.com/@PikasGardening", sourceType: "official-youtube", verified: true },
       ],
       profileImage: {
-        src: "images/people/amit-shill.jpg",
+        src: "images/people/amit-shill.jpg?v=swap1",
         sourceType: "supplied-portrait",
         subject: "person",
         caption: "Amit Shill",
@@ -214,10 +214,10 @@
       identity: "Krishna Biswas is the named agri-entrepreneur for Rupali Garden in Maynaguri. The person record stays distinct from the garden record.",
       story: {
         kind: "agri-entrepreneur-story",
-        text: "Krishna Biswas publishes garden practice from Rupali Garden on the public YouTube channel Rupali Garden. Source films show dragon fruit flowering, pruning, cuttings and fungal care. Named to Himalayan Giants in Zone 1. This is an agri-entrepreneur story from public source media, not a measured success report.",
-        source: "Rupali Garden YouTube",
+        text: "Krishna Biswas is the named agri-entrepreneur for Rupali Garden in Maynaguri. Krishna appears on the same published Karmyog TV session film as an agricultural creator. The public YouTube channel Rupali Garden shows dragon-fruit practice — flowering, pruning, cuttings and fungal care. Krishna is named to Himalayan Giants in Zone 1. This is an agri-entrepreneur story from the session film and that source channel. It is not a measured success report.",
+        source: "Karmyog TV session film · Rupali Garden YouTube",
         sourceUrl: "https://www.youtube.com/@RupaliGarden",
-        sourceType: "official-youtube",
+        sourceType: "session-film-and-official-youtube",
         verified: true,
       },
       whatTheyGrow: [
@@ -228,7 +228,7 @@
         { name: "Flowering, pruning, cuttings and fungal care", source: "Rupali Garden YouTube", sourceUrl: "https://www.youtube.com/@RupaliGarden", sourceType: "official-youtube", verified: true },
       ],
       profileImage: {
-        src: "images/people/krishna-biswas.jpg",
+        src: "images/people/krishna-biswas.jpg?v=swap1",
         sourceType: "supplied-portrait",
         subject: "person",
         caption: "Krishna Biswas",

@@ -353,7 +353,7 @@
     return `<section class="player"${team ? ` style="--accent:${esc(team.accent)}"` : ""}>
       ${visual ? `<figure class="player-still${portrait ? " is-portrait" : ""}">
         <img src="${esc(visual.src)}" alt="${esc(portrait ? person.name : (visual.caption || person.name))}">
-        ${portrait ? "" : `<figcaption>${esc(visual.caption || "Source film. Not a field portrait.")}</figcaption>`}
+        <figcaption>${esc(portrait ? "Supplied portrait · " + person.name + ". Not an AI image and not farm evidence." : (visual.caption || "Source film. Not a field portrait."))}</figcaption>
       </figure>` : ""}
       <div class="player-copy">
         <p class="label">Agri-entrepreneur</p>
@@ -443,13 +443,102 @@
       { k: "06", t: "Intelligence", d: "Future intelligence layer. Programme architecture, not a live claim." },
     ];
     return `<section class="network-model reveal">
-      <header class="sec-head">
-        <p class="sec-k">Network model</p>
-        <h2>From farm to network</h2>
-        <p>The programme architecture. Not every layer is operational.</p>
-      </header>
-      <ol class="network-rail">${steps.map((s) => `<li><b>${s.k}</b><strong>${esc(s.t)}</strong><span>${esc(s.d)}</span></li>`).join("")}</ol>
+      <figure class="network-visual">
+        <img src="images/editorial/farm-network.jpg" alt="Editorial visual of connected Bengal farm plots">
+        <figcaption>Editorial visual. Farm-to-network concept — not a live operations map and not a named holding.</figcaption>
+      </figure>
+      <div class="network-copy">
+        <header class="sec-head">
+          <p class="sec-k">From farm to network</p>
+          <h2>Farmer. Farm. Team. Geography. Data. Intelligence.</h2>
+          <p>The programme architecture. Not every layer is operational.</p>
+        </header>
+        <ol class="network-rail">${steps.map((s) => `<li><b>${s.k}</b><strong>${esc(s.t)}</strong><span>${esc(s.d)}</span></li>`).join("")}</ol>
+      </div>
     </section>`;
+  }
+
+  function foundingStatement(session) {
+    const film = session
+      ? `<a href="${esc(session.src)}" target="_blank" rel="noopener noreferrer">published session film</a>`
+      : "published session film";
+    return `<section class="founding">
+      <p class="sec-k">Source session</p>
+      <h2>Farming needs its turning-point innings.</h2>
+      <p class="lede">The ${film} names Krishi Ratna League as that strategy: a league of teams, not a protest. IPL is the reference for energy and belonging. It is not the brand we wear.</p>
+      <blockquote>
+        <p>What farming needs is that single Kapil Dev moment.</p>
+        <footer>Mahacharya Ji · Karmyog TV. Opening statement, not a live scoreboard.</footer>
+      </blockquote>
+    </section>`;
+  }
+
+  function axisLine() {
+    const axes = [
+      { t: "Satya", d: "Honesty on the holding. Natural practice, when evidenced. Record what is known." },
+      { t: "Mangalmay", d: "Useful tools and smart practice on the garden, when they can be shown." },
+      { t: "Sundar", d: "A farm that can be seen and visited. Beauty as design, not decoration." },
+      { t: "Samriddhi", d: "Prosperity as the aim when the three hold. Not a fake score." },
+    ];
+    return `<section class="axis-line reveal" aria-label="Programme axes">
+      ${axes.map((ax) => `<article><h3>${esc(ax.t)}</h3><p>${esc(ax.d)}</p></article>`).join("")}
+    </section>`;
+  }
+
+  function editorialField() {
+    const shots = [
+      { src: "images/editorial/bengal-field.jpg", t: "Bengal agricultural landscape" },
+      { src: "images/editorial/garden-hands.jpg", t: "Work with plants" },
+      { src: "images/editorial/pond.jpg", t: "Water and holding" },
+      { src: "images/editorial/field-tech.jpg", t: "Field and a tool" },
+    ];
+    return `<section class="edit-band reveal">
+      <header class="sec-head">
+        <p class="sec-k">Field atmosphere</p>
+        <h2>The work is on the ground</h2>
+        <p class="media-note">Editorial visuals. Not farmer portraits, not verified farm evidence, and not programme event photographs.</p>
+      </header>
+      <div class="edit-strip">${shots.map((s) => `<figure>
+        <img src="${s.src}" alt="${esc(s.t)}">
+        <figcaption>${esc(s.t)} · editorial</figcaption>
+      </figure>`).join("")}</div>
+    </section>`;
+  }
+
+  function homeStories() {
+    return `<section class="home-stories reveal">
+      <figure>
+        <img src="images/campaign/puja-days.jpg" alt="Puja days campaign storyboard">
+        <figcaption>Campaign storyboard. Not farm evidence.</figcaption>
+      </figure>
+      <div>
+        <p class="sec-k">Stories</p>
+        <h2>League language, source film, named gardens.</h2>
+        <p>The published session sets a Durga Puja 2026–2028 arc. Campaign boards stay labelled as campaign. Garden film stays labelled as source media. Named people keep their own portraits.</p>
+        <p class="story-links"><a class="btn" href="${href("media")}">Open the media desk</a><a href="${href("farmers")}">Meet agri-entrepreneurs</a></p>
+      </div>
+    </section>`;
+  }
+
+  function editorialContext(person) {
+    const map = {
+      "amit-shill": {
+        src: "images/editorial/rooftop-garden.jpg",
+        title: "Rooftop cultivation, editorial",
+        note: "Editorial visual. Atmospheric agriculture imagery — not a photograph of Pikas Garden and not a portrait of Amit Shill.",
+      },
+      "krishna-biswas": {
+        src: "images/editorial/dragon-fruit.jpg",
+        title: "Dragon fruit horticulture, editorial",
+        note: "Editorial visual. Thematic horticulture imagery — not a photograph of Rupali Garden and not a portrait of Krishna Biswas.",
+      },
+    };
+    const item = map[person.id];
+    if (!item) return "";
+    return `<figure class="edit-context reveal">
+      <img src="${esc(item.src)}" alt="${esc(item.title)}">
+      <figcaption>${esc(item.note)}</figcaption>
+    </figure>`;
   }
 
   function bootHeroLogo() {
@@ -472,6 +561,7 @@
     if (play && play.catch) play.catch(function () { brand.classList.add("is-static"); });
     video.addEventListener("ended", function () {
       brand.classList.add("is-settled");
+      brand.classList.remove("is-live");
     }, { once: true });
   }
 
@@ -491,15 +581,39 @@
     return !!(farm.journey && farm.journey.some((j) => j.date && j.note && j.note !== "Prototype milestone."));
   }
 
+  function farmArchitectureTabs() {
+    return [
+      ["overview", "Overview"],
+      ["journey", "Journey"],
+      ["smart", "Smart farming"],
+      ["monitor", "Monitoring"],
+      ["media", "Media"],
+      ["people", "People / Support"],
+      ["social", "Social"],
+    ];
+  }
+
   function farmAvailableTabs(farm) {
     const tabs = [["overview", "Overview"]];
-    if (hasAuthoredJourney(farm)) tabs.push(["journey", "Farm journey"]);
+    if (hasAuthoredJourney(farm)) tabs.push(["journey", "Journey"]);
     if (smartRows(farm).length) tabs.push(["smart", "Smart farming"]);
     if (farm.lastVisit || ((farm.plots || []).length)) tabs.push(["monitor", "Monitoring"]);
     if ((farm.evidence || []).length) tabs.push(["media", "Media"]);
-    if (supportPeople(farm).length) tabs.push(["people", "People and support"]);
-    if (socialChannels(farm).length) tabs.push(["social", "Social presence"]);
+    if (supportPeople(farm).length) tabs.push(["people", "People / Support"]);
+    if (socialChannels(farm).length) tabs.push(["social", "Social"]);
     return tabs;
+  }
+
+  function farmHasTab(farm, id) {
+    return farmAvailableTabs(farm).some((row) => row[0] === id);
+  }
+
+  function farmEmpty(label) {
+    return `<div class="farm-empty">
+      <p class="sec-k">Field intelligence</p>
+      <h2>Verified field data will appear here</h2>
+      <p class="media-note">${esc(label)} is part of the Farm 360 architecture. Nothing is shown until a source record exists.</p>
+    </div>`;
   }
 
   function mediaConnectCta() {
@@ -599,10 +713,35 @@
     return empty(kind + " not found", "No known record matches “" + id + "”. Return to the command centre and try another path.");
   }
 
+  function homeGeography() {
+    const s = D.programmeStats();
+    return `<section class="geo-home reveal">
+      <div>${wbMap(false)}</div>
+      <div>
+        <p class="sec-k">Geographic network</p>
+        <h2 class="display-s">West Bengal to the farm</h2>
+        <p class="lede">The operating system is geography. This is a programme view, not a cadastral map and not a live scoreboard.</p>
+        <ol class="geo-ladder">
+          <li>West Bengal</li>
+          <li>District</li>
+          <li>Assembly constituency</li>
+          <li>Team</li>
+          <li>Agri-entrepreneur</li>
+          <li>Farm</li>
+        </ol>
+        <dl class="geo-struct">
+          <div><dt>Districts in the state frame</dt><dd>${s.districts}</dd></div>
+          <div><dt>Assembly seats</dt><dd>${s.acs}</dd></div>
+          <div><dt>Official teams</dt><dd>${s.teams}</dd></div>
+        </dl>
+        <p class="story-links"><a class="btn" href="${href("geo")}">Open geography</a></p>
+      </div>
+    </section>`;
+  }
+
   function viewCommand() {
     setNav("command");
     crumb([{ href: "#/", label: "West Bengal" }, { label: "Command Centre" }]);
-    const s = D.programmeStats();
     const crests = D.TEAMS.map((t) => `<a class="crest" href="${href("team/" + t.id)}"><img src="${esc(t.logo)}" alt="${esc(t.name)}"><b>${esc(t.short)}</b></a>`).join("");
     const fan = D.TEAMS.map((t) => {
       const zone = teamZone(t);
@@ -613,67 +752,49 @@
         <em>${esc(zone ? zone.name : teamRegion(t))}</em>
       </a>`;
     }).join("");
-    const axes = [
-      { id: "sat", src: "images/campaign/intelligence.jpg", title: "Satya", line: "Record what is known. Hide what is not." },
-      { id: "mangalmay", src: "images/campaign/living-system.jpg", title: "Mangalmay", line: "Smart practice on the garden, when evidenced." },
-      { id: "sundar", src: "images/campaign/ten-forces.jpg", title: "Sundar", line: "Farm design that can be seen, not invented." },
-      { id: "samriddhi", src: "images/campaign/food-soil.jpg", title: "Samriddhi", line: "Prosperity as a programme aim, not a fake score." },
-    ].map((ax) => `<article class="axis reveal"><img src="${ax.src}" alt="${esc(ax.title)}"><div><h3>${esc(ax.title)}</h3><p>${esc(ax.line)}</p></div></article>`).join("");
     const session = D.mediaWhere("link")[0];
 
     return `<div data-motion="command">
       <section class="arena">
         <figure class="arena-brand">
-          <img class="arena-poster" src="video/krl-animated-logo-poster.jpg" width="1280" height="720" alt="Krishi Ratna League Bengal mark">
-          <video id="krl-hero-logo" class="arena-logo" muted playsinline preload="metadata" poster="video/krl-animated-logo-poster.jpg" aria-label="KRL animated brand mark">
-            <source src="video/krl-animated-logo.webm" type="video/webm">
-            <source src="video/krl-animated-logo.mp4" type="video/mp4">
-          </video>
-        </figure>
-        <div class="arena-body">
-          <div class="arena-copy">
-            <p class="label">KRL Teams</p>
-            <h1>The field is the farm.<br>The farmer is the champion.</h1>
-            <p class="lede">From people and farms to a connected agricultural network. Named gardens are on camera. Geography is the operating system. Farm 360 opens only where a holding is known.</p>
-            <div class="arena-cta">
-              <a class="btn" href="${href("teams")}">Open teams</a>
-              <a class="btn ghost" href="${href("farmers")}">Meet agri-entrepreneurs</a>
-            </div>
+          <div class="arena-frame">
+            <img class="arena-poster" src="video/krl-animated-logo-poster.jpg" width="1920" height="1080" alt="Krishi Ratna League Bengal mark">
+            <video id="krl-hero-logo" class="arena-logo" muted playsinline preload="metadata" poster="video/krl-animated-logo-poster.jpg" width="1920" height="1080" aria-label="KRL animated brand mark">
+              <source src="video/krl-animated-logo.webm" type="video/webm">
+              <source src="video/krl-animated-logo.mp4" type="video/mp4">
+            </video>
           </div>
-          <figure class="arena-film" aria-hidden="true">
-            <div class="arena-slides">
-              <img src="images/campaign/your-league.jpg" alt="">
-              <img src="images/campaign/scoreboard.jpg" alt="">
-              <img src="images/campaign/field-league.jpg" alt="">
-              <img src="images/campaign/pavilion.jpg" alt="">
-            </div>
-          </figure>
+        </figure>
+        <div class="arena-statement">
+          <p class="label">KRL Teams</p>
+          <h1>The field is the farm.<br>The farmer is the champion.</h1>
+          <p class="lede">From people and farms to a connected agricultural network.</p>
+          <div class="arena-cta">
+            <a class="btn" href="${href("teams")}">Open teams</a>
+            <a class="btn ghost" href="${href("farmers")}">Meet agri-entrepreneurs</a>
+          </div>
         </div>
+      </section>
+      ${foundingStatement(session)}
+      ${featuredEntrepreneurs()}
+      ${homeGeography()}
+      <section class="teams-head reveal">
+        <p class="sec-k">Teams</p>
+        <h2 class="display-s">Fifteen official crests</h2>
+        <p class="lede">Official KRL identities. Geography assigned. Not invented slots.</p>
       </section>
       <div class="crest-marquee" aria-label="Official teams">
         <div class="crest-track">${crests}${crests}</div>
       </div>
-      <section class="scale-band reveal">
-        <div><b>${s.acs}</b><span>Assembly seats in the state frame</span></div>
-        <div><b>${s.teams}</b><span>Official league identities</span></div>
-        <div><b>${s.targetFarmers.toLocaleString("en-IN")}</b><span>Programme target, not enrolment</span></div>
-      </section>
-      <section class="axis-grid">${axes}</section>
-      ${featuredEntrepreneurs()}
-      ${networkModel()}
       <section class="fan-wrap reveal">
-        <h2>Fifteen crests</h2>
         <div class="fan-row">${fan}</div>
+        <p class="story-links"><a href="${href("teams")}">Open the team register</a></p>
       </section>
-      <section class="campaign-desk reveal">
-        <h2>League story</h2>
-        <p class="media-note">Campaign storyboards. Not verified farm evidence and not live enrolment.</p>
-        <div class="campaign-grid">
-          <figure class="wide"><img src="images/campaign/puja-days.jpg" alt="Puja days campaign"></figure>
-        </div>
-      </section>
+      ${networkModel()}
+      ${editorialField()}
+      ${homeStories()}
       ${session ? `<p class="session-link">Programme session film · <a href="${esc(session.src)}" target="_blank" rel="noopener noreferrer">${esc(session.caption)}</a></p>` : ""}
-      ${leagueBoard()}
+      ${mediaConnectCta()}
     </div>`;
   }
 
@@ -714,7 +835,15 @@
     return `<section class="ident"><div>
       <p class="mast-k">Programme Geographic View</p>
       <h1>Geography</h1>
-      <p>West Bengal to district to assembly constituency to the field network. Agricultural planning here is geography-aware and area-specific. This is a programme geographic view, not a cadastral map, and not a live statistical bulletin.</p>
+      <p>West Bengal to district to assembly constituency to team to agri-entrepreneur to farm. This is a programme geographic view, not a cadastral map, and not a live statistical bulletin.</p>
+      <ol class="geo-ladder">
+        <li>West Bengal</li>
+        <li>District</li>
+        <li>Assembly constituency</li>
+        <li>Team</li>
+        <li>Agri-entrepreneur</li>
+        <li>Farm</li>
+      </ol>
     </div></section>
       <div class="geo-page">${wbMap(true)}</div>`;
   }
@@ -847,10 +976,11 @@
     const acList = D.ACS.filter((a) => a.teamId === id).map((a) => `<a class="reg-row" href="${href("ac/" + a.id)}"><b>${esc(a.name)}</b><span>${esc(nameOf("district", a.districtId))}</span><em></em><em></em></a>`).join("");
     const squad = peopleOfTeam(id);
     return `<section class="ident ident-row">${teamMark(team)}<div>
-      <p class="mast-k">Team operations</p>
+      <p class="mast-k">Team identity</p>
       <h1>${esc(team.name)}</h1>
       ${zone ? `<p class="story-garden"><a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a></p>` : ""}
       <p>${districts}</p>
+      <p class="meta">Team relationship follows programme geography or a named assignment. Not a live enrolment record.</p>
     </div></section>
     <dl class="ledger">
       <div><dt>Agri-entrepreneurs</dt><dd>${st.farmers}</dd></div>
@@ -1013,30 +1143,34 @@
     const vision = f.smartFarmingVision || f.vision;
     return `<div data-motion="page">
       ${playerHero(f)}
+      ${story ? `<section class="farmer-story">
+        <p class="sec-k">Agri-entrepreneur story</p>
+        <h2>The person, not a success score</h2>
+        <p>${esc(story.text)}</p>
+        ${story.source ? `<p class="meta">Source · ${esc(story.source)}</p>` : ""}
+      </section>` : ""}
       <section class="story-chapters">
-        <article class="reveal">
-          <h2>Identity</h2>
-          <p>${esc(f.identity || (f.name + " is a named agri-entrepreneur. The record stays with the person, not the holding."))}</p>
-        </article>
-        <article class="reveal">
-          <h2>The farm</h2>
-          <p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")} is the known garden.</p>
+        <article>
+          <h2>What they grow and do</h2>
+          <p>${f.farmIds.map((fid) => `<a href="${href("farm/" + fid)}">${esc(nameOf("farm", fid))}</a>`).join(" · ")} is the known garden. Size, yield and income stay hidden until evidenced.</p>
           ${grow.length ? `<p class="meta">What they grow</p>${growChips(grow)}` : ""}
           ${does.length ? `<p class="meta">What they do</p>${growChips(does)}` : ""}
-          ${!grow.length && !does.length ? `<p>Size, yield and plots stay hidden until evidenced.</p>` : ""}
+          ${f.practice ? `<p class="meta">${esc(f.practice)}</p>` : ""}
         </article>
-        ${whereBits.length ? `<article class="reveal"><h2>The geography</h2><p>${whereBits.join(" · ")}</p></article>` : ""}
-        ${team ? `<article class="reveal"><h2>The team</h2><p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${zone ? ` · <a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>` : ""}. ${esc(teamNote(f))}</p></article>` : ""}
-        ${f.practice ? `<article class="reveal"><h2>The practice</h2><p>${esc(f.practice)}</p></article>` : ""}
-        ${space ? `<article class="reveal"><h2>Farm space</h2><p>${esc(space)}</p></article>` : ""}
-        ${story ? `<article class="reveal"><h2>Agri-entrepreneur story</h2><p>${esc(story.text)}</p></article>` : ""}
-        ${vision ? `<article class="reveal"><h2>Smart farming vision</h2><p>${esc(typeof vision === "string" ? vision : vision.text)}</p></article>` : ""}
-        ${f.farmIds[0] ? `<article class="reveal"><h2>Farm 360</h2><p><a href="${href("farm/" + f.farmIds[0])}">Open the holding record</a> for people, source channels and what is known.</p></article>` : ""}
+        ${whereBits.length || team ? `<article>
+          <h2>Geography and team</h2>
+          ${whereBits.length ? `<p>${whereBits.join(" · ")}</p>` : ""}
+          ${team ? `<p><a href="${href("team/" + team.id)}">${esc(team.name)}</a>${zone ? ` · <a href="${href("zone/" + zone.id)}">${esc(zone.name)}</a>` : ""}. ${esc(teamNote(f))}</p>` : ""}
+        </article>` : ""}
+        ${space ? `<article><h2>Farm space</h2><p>${esc(space)}</p></article>` : ""}
+        ${vision ? `<article><h2>Smart farming vision</h2><p>${esc(typeof vision === "string" ? vision : vision.text)}</p></article>` : ""}
       </section>
+      ${editorialContext(f)}
       ${cinemaStage(f)}
       ${digitalDesk(f)}
       <section class="register">
-        <h2 class="sec-title">Farms / gardens</h2>
+        <h2 class="sec-title">Farm 360</h2>
+        <p class="media-note">The holding record is separate from the person. Open it only for what is known about the garden.</p>
         ${farmRows}
       </section>
     </div>`;
@@ -1067,9 +1201,9 @@
   }
 
   function farmTabs(farm, tab) {
-    const tabs = farmAvailableTabs(farm);
+    const tabs = farmArchitectureTabs();
     return `<nav class="tabs" aria-label="Farm sections">${tabs.map(([id, label]) =>
-      `<a href="${href("farm/" + farm.id + "/" + id)}" ${tab === id ? 'aria-current="page"' : ""}>${label}</a>`
+      `<a href="${href("farm/" + farm.id + "/" + id)}" ${tab === id ? 'aria-current="page"' : ""}${!farmHasTab(farm, id) && id !== "overview" ? ' data-empty="true"' : ""}>${label}</a>`
     ).join("")}</nav>`;
   }
 
@@ -1097,7 +1231,7 @@
     return `<section class="dossier${visual || clip ? "" : " dossier-plain"}">
       ${visual ? `<figure class="dossier-visual"><img src="${esc(visual.src)}" alt="${esc(visual.caption)}"></figure>` : clip ? `<figure class="dossier-visual"><a class="story-still" href="${href("farmer/" + farmer.id)}"><img src="${ytThumb(clip.youtubeId)}" alt="${esc(clip.title)}"></a></figure>` : ""}
       <div>
-        <p class="label">${farm.kind === "case-study" ? "Farm 360 · agri-entrepreneur holding" : "Farm 360"}</p>
+        <p class="label">${farm.kind === "case-study" ? "Farm 360 · field intelligence" : "Farm 360 · field intelligence"}</p>
         <h1>${esc(farm.name)}</h1>
         ${farmer ? `<p class="player-garden"><a href="${href("farmer/" + farmer.id)}">${esc(farmer.name)}</a></p>` : ""}
         ${farmerChain(farmer, farm)}
@@ -1125,8 +1259,13 @@
     const farmer = D.byId(D.FARMERS, farm.farmerId);
     const agent = farm.agentId ? D.byId(D.AGENTS, farm.agentId) : null;
     const allowed = farmAvailableTabs(farm).map((x) => x[0]);
-    const current = allowed.includes(tab) ? tab : "overview";
+    const architecture = farmArchitectureTabs().map((x) => x[0]);
+    const current = architecture.includes(tab) ? tab : "overview";
     const head = farmHeader(farm) + farmTabs(farm, current);
+    const labels = Object.fromEntries(farmArchitectureTabs());
+    if (current !== "overview" && !allowed.includes(current)) {
+      return head + farmEmpty(labels[current] || "This section");
+    }
 
     if (current === "journey") {
       const items = (farm.journey || []).filter((j) => j.date).map((j) => `<li data-status="${esc(j.status)}">
@@ -1209,12 +1348,14 @@
         ${farmTeam ? `<li><h3>Team</h3><p><a href="${href("team/" + farmTeam.id)}">${esc(farmTeam.name)}</a></p></li>` : ""}
         ${farmer && (farmer.whatTheyGrow || []).length ? `<li><h3>What they grow</h3>${growChips(farmer.whatTheyGrow)}</li>` : farm.sizeAcres != null || farm.crop ? `<li><h3>What they grow / do</h3><p>${[farm.sizeAcres != null ? farm.sizeAcres + " acres" : null, farm.crop].filter(Boolean).join(" · ")}</p></li>` : ""}
         ${farmer && (farmer.whatTheyDo || []).length ? `<li><h3>What they do</h3>${growChips(farmer.whatTheyDo)}</li>` : ""}
-        ${allowed.includes("people") ? `<li><h3>People</h3><p><a href="${href("farm/" + farm.id + "/people")}">Support network</a></p></li>` : ""}
-        ${allowed.includes("social") ? `<li><h3>Digital presence</h3><p><a href="${href("farm/" + farm.id + "/social")}">Source channels</a></p></li>` : ""}
+        <li><h3>People</h3><p>${allowed.includes("people") ? `<a href="${href("farm/" + farm.id + "/people")}">Support network</a>` : "Named people appear when recorded."}</p></li>
+        <li><h3>Digital presence</h3><p>${allowed.includes("social") ? `<a href="${href("farm/" + farm.id + "/social")}">Source channels</a>` : "Source channels appear when published."}</p></li>
       </ol>
       <aside>
-        <h2 class="sec-title">Record standing</h2>
-        <p class="now">${farm.kind === "case-study" ? "Model Farmer holding. Crop, size, team enrolment and operational history appear only when known." : ""}</p>
+        <p class="sec-k">Field intelligence</p>
+        <h2 class="display-s">Show what we know</h2>
+        <p class="now">${farm.kind === "case-study" ? "Named garden record. Crop size, yield, GPS and operational history stay hidden until evidenced." : "Named garden record."}</p>
+        ${farmEmpty("Journey, smart farming and monitoring")}
       </aside>
     </div>`;
   }
